@@ -20,13 +20,15 @@ export async function nextRef(db, type, year) {
 export async function generateDocument(db, { clientId, type, params = {}, asOf = today(), userId = null, pdf = true }) {
   const t = TYPES[type]; if (!t) throw Object.assign(new Error("unknown document type"), { statusCode: 400 });
   const s = await loadState(db, asOf);
-  const c = s.clients.find(x => String(x.id) === String(clientId)); if (!c) throw Object.assign(new Error("client not found"), { statusCode: 404 });
+  const c = t.counterparty === "broker" ? null : s.clients.find(x => String(x.id) === String(clientId));
+  if (!c && t.counterparty !== "broker") throw Object.assign(new Error("client not found"), { statusCode: 404 });
   if (t.carriesFigures) { const st = clientStats(c, s.entries, s.rules, asOf); if (st.est > 0) throw new FindingsBlockedError(c.company, st.est); }
   const ref = await nextRef(db, type, asOf.getFullYear());
-  const { title, body } = render(type, { c, entries: s.entries, rules: s.rules, asOf, ref, params });
+  const { title, body } = render(type, { c, entries: s.entries, rules: s.rules, ruleRows: s.ruleRows, asOf, ref, params });
   const html = page({ title, body });
-  const row = (await db.query(`INSERT INTO documents(client_id, ref, type, title, html, rule_version_id, created_by, as_of, params) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id, ref, type, title, created_at`,
-    [c.id, ref, type, title, html, s.ruleVersionId, userId, fmt(asOf), JSON.stringify(params)])).rows[0];
+  const counterparty = c ? c.company : (params.brokerName || null);
+  const row = (await db.query(`INSERT INTO documents(client_id, ref, type, title, html, rule_version_id, created_by, as_of, params, counterparty) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id, ref, type, title, created_at`,
+    [c ? c.id : null, ref, type, title, html, s.ruleVersionId, userId, fmt(asOf), JSON.stringify(params), counterparty])).rows[0];
   let pdfPath = null;
   if (pdf) {
     const dir = documentsDir(); mkdirSync(dir, { recursive: true });
@@ -34,16 +36,16 @@ export async function generateDocument(db, { clientId, type, params = {}, asOf =
     pdfPath = join(dir, ref + ".pdf"); writeFileSync(pdfPath, bytes);
     await db.query("UPDATE documents SET pdf_url=$2 WHERE id=$1", [row.id, `/api/documents/${row.id}/pdf`]);
   }
-  await audit(db, "generate", "documents", row.id, null, { ref, type, client_id: c.id, rule_version_id: s.ruleVersionId, as_of: fmt(asOf), params }, userId);
-  return { id: row.id, ref, type, title, html, pdfUrl: pdf ? `/api/documents/${row.id}/pdf` : null, pdfPath, ruleVersionId: s.ruleVersionId, asOf: fmt(asOf), client: c.company };
+  await audit(db, "generate", "documents", row.id, null, { ref, type, client_id: c ? c.id : null, counterparty, rule_version_id: s.ruleVersionId, as_of: fmt(asOf), params }, userId);
+  return { id: row.id, ref, type, title, html, pdfUrl: pdf ? `/api/documents/${row.id}/pdf` : null, pdfPath, ruleVersionId: s.ruleVersionId, asOf: fmt(asOf), client: c ? c.company : null, counterparty };
 }
 
 export async function listDocuments(db, clientId) {
-  const { rows } = await db.query("SELECT id, client_id, ref, type, title, pdf_url, rule_version_id, to_char(as_of,'YYYY-MM-DD') AS as_of, params, created_at FROM documents WHERE ($1::int IS NULL OR client_id=$1) ORDER BY created_at DESC, id DESC", [clientId ?? null]);
+  const { rows } = await db.query("SELECT id, client_id, counterparty, ref, type, title, pdf_url, rule_version_id, to_char(as_of,'YYYY-MM-DD') AS as_of, params, created_at FROM documents WHERE ($1::int IS NULL OR client_id=$1 OR client_id IS NULL) ORDER BY created_at DESC, id DESC", [clientId ?? null]);
   return rows.map(r => ({ ...r, typeName: TYPES[r.type]?.name || r.type, params: typeof r.params === "string" ? JSON.parse(r.params) : r.params }));
 }
 export async function getDocument(db, id) {
-  const { rows } = await db.query("SELECT id, client_id, ref, type, title, html, pdf_url, rule_version_id, to_char(as_of,'YYYY-MM-DD') AS as_of FROM documents WHERE id=$1", [id]);
+  const { rows } = await db.query("SELECT id, client_id, counterparty, ref, type, title, html, pdf_url, rule_version_id, to_char(as_of,'YYYY-MM-DD') AS as_of FROM documents WHERE id=$1", [id]);
   const r = rows[0]; if (!r) return null;
   const p = join(documentsDir(), r.ref + ".pdf"); return { ...r, pdfPath: existsSync(p) ? p : null };
 }

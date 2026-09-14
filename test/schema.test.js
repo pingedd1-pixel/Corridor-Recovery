@@ -13,7 +13,7 @@ after(async () => { await db.close(); });
 test("migrations apply once and are idempotent", async () => {
   assert.deepEqual(await migrate(db), []);
   const { rows } = await db.query("SELECT name FROM schema_migrations ORDER BY name");
-  assert.deepEqual(rows.map(r => r.name), ["001_init.sql", "002_documents.sql"]);
+  assert.deepEqual(rows.map(r => r.name), ["001_init.sql", "002_documents.sql", "004_document_terms.sql"]);
   const tables = (await db.query("SELECT table_name FROM information_schema.tables WHERE table_schema='public' ORDER BY 1")).rows.map(r => r.table_name);
   for (const t of ["clients", "entries", "rules", "rule_versions", "computed", "tasks", "documents", "bulletins", "prospects_b", "users", "audit_log", "broker_mappings"]) assert.ok(tables.includes(t), t);
 });
@@ -25,6 +25,9 @@ test("rules load as of a date with sources, and pin a rule_version", async () =>
   assert.ok(detail.every(d => d.source && d.source.length > 10));
   const again = await loadRules(db, "2026-09-13");
   assert.equal(again.ruleVersionId, ruleVersionId, "same rule set → same version");
+  assert.equal(again.all.fee_protest.placeholder, true, "[22.5]% is a placeholder until counsel approves");
+  assert.equal(again.all.fee_phase1.placeholder, false);
+  assert.equal(again.all.broker_fee_share_pct.text, "[ ]"); assert.equal(again.all.authorization_validity_months.value, 12);
 });
 
 test("a rule change with an effective date yields a new rule_version and leaves history intact", async () => {
