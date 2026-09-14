@@ -65,7 +65,7 @@ kbd{font:inherit;font-size:11px;border:1px solid var(--alu);padding:0 5px;border
 </style>
 </head>
 <body><div class="wrap">
-<div class="mark"><div><b>CORRIDOR</b><span>RECOVERY</span></div><small>Desk v0.2 · <span id="asof"></span> · <kbd>/</kbd> search · <kbd>n</kbd> new client · <kbd>1–7</kbd> tabs</small></div>
+<div class="mark"><div><b>CORRIDOR</b><span>RECOVERY</span></div><small>Desk v0.2.1 · <span id="asof"></span> · <kbd>/</kbd> search · <kbd>n</kbd> new client · <kbd>1–7</kbd> tabs</small></div>
 <nav id="nav">
 <button class="on" data-t="dash">Dashboard</button>
 <button data-t="tasks">Tasks<span class="c" id="cTasks">0</span></button>
@@ -165,6 +165,7 @@ kbd{font:inherit;font-size:11px;border:1px solid var(--alu);padding:0 5px;border
 <div class="panel"><textarea id="bulletin" placeholder="Paste a CBP CSMS message, CBSA Customs Notice, or Federal Register notice…"></textarea><button class="b" id="readBulletin">Extract rule impacts</button><div id="bulletinOut"></div></div>
 <h2>Rule feed</h2>
 <ul class="feed small">
+<li><span class="d">2026-09-14</span>Approved: Phase 3 (finally liquidated) opened late Jul, contested on appeal → label change; Phase 2 (reconciliation) opened Jun 29; Step 3 document = ACE ES-003 or broker entry report; accepted declarations cannot be amended; Form 4811 payee designation.</li>
 <li><span class="d">2026-09-08</span>Canada: 15/25/50% surtaxes on C$27.6B of US goods; remission/drawback via existing 2025 order (CBSA CN 26-23).</li>
 <li><span class="d">2026-09-08</span>US: five Section 338 proclamations incl. import bans from Sept 29 — not IEEPA, not refundable.</li>
 <li><span class="d">2026-04-20</span>CBP opened CAPE in ACE. Phase 1 = unliquidated or ≤80 days post-liquidation. File = CSV of entry numbers.</li>
@@ -204,11 +205,11 @@ function phase(e){const r=S.rules,t=today();const cls=classify(e.hts);
   const duty=e.duty!=null&&e.duty!==""?+e.duty:(+e.value||0)*(+e.rate||0);
   if(!liqEff)return {phase:"—",cls,deadline:null,days:null,est,duty};
   const since=db(t,liqEff);let ph,dead;
-  if(since<0){ph="Phase 1 — unliquidated";dead=addDays(liqEff,r.p1);}else if(since<=r.p1){ph="Phase 1 — recently liquidated";dead=addDays(liqEff,r.p1);}else if(since<=r.prot){ph="Protest required";dead=addDays(liqEff,r.prot);}else{ph="Deadline passed — litigation only";dead=addDays(liqEff,r.prot);}
+  if(since<0){ph="Phase 1 — unliquidated";dead=addDays(liqEff,r.p1);}else if(since<=r.p1){ph="Phase 1 — recently liquidated";dead=addDays(liqEff,r.p1);}else if(since<=r.prot){ph="Protest required";dead=addDays(liqEff,r.prot);}else{ph="Phase 3 — finally liquidated (contested on appeal)";dead=addDays(liqEff,r.prot);}
   return {phase:ph,cls,deadline:dead,days:db(dead,t),est,duty,liqEff};}
-const tagFor=p=>p.na?'<span class="tag t-na">'+esc(p.cls.label)+'</span>':p.phase.startsWith("Phase 1")?'<span class="tag t-p1">Phase 1</span>':p.phase.startsWith("Protest")?'<span class="tag t-pr">Protest</span>':p.phase.startsWith("Deadline")?'<span class="tag t-gone">Passed</span>':"";
+const tagFor=p=>p.na?'<span class="tag t-na">'+esc(p.cls.label)+'</span>':p.phase.startsWith("Phase 1")?'<span class="tag t-p1">Phase 1</span>':p.phase.startsWith("Protest")?'<span class="tag t-pr">Protest</span>':p.phase.startsWith("Phase 3")?'<span class="tag t-gone">Phase 3 · contested</span>':"";
 function clientStats(c){const es=S.entries.filter(e=>e.client===c.company).map(e=>({e,p:phase(e)}));const sum=f=>es.filter(f).reduce((a,x)=>a+x.p.duty,0);
-  const p1=sum(x=>x.p.phase.startsWith("Phase 1")),pr=sum(x=>x.p.phase.startsWith("Protest")),gone=sum(x=>x.p.phase.startsWith("Deadline")),na=es.filter(x=>x.p.na).length,est=es.filter(x=>x.p.est&&!x.p.na).length;
+  const p1=sum(x=>x.p.phase.startsWith("Phase 1")),pr=sum(x=>x.p.phase.startsWith("Protest")),gone=sum(x=>x.p.phase.startsWith("Phase 3")),na=es.filter(x=>x.p.na).length,est=es.filter(x=>x.p.est&&!x.p.na).length;
   const live=es.filter(x=>x.p.days!=null&&x.p.days>=0&&!x.p.na).sort((a,b)=>a.p.days-b.p.days);const min=live.length?live[0].p.days:null;const past=es.filter(x=>x.p.days!=null&&x.p.days<0).length;
   const exposure=(+c.sales||0)*(+c.share||0)*(+c.rate||0);const fee=p1*S.rules.fee1+pr*S.rules.fee2;
   const consignees=[...new Set(es.map(x=>x.e.consignee).filter(Boolean))];
@@ -236,9 +237,9 @@ function render(){renderDash();renderTasks();renderClients();renderEntries();fil
   document.getElementById("cClients").textContent=S.clients.length;document.getElementById("cEntries").textContent=S.entries.length;
   const open=tasks().filter(t=>!t.done);const hot=open.filter(t=>t.hot).length;const cT=document.getElementById("cTasks");cT.textContent=open.length;cT.className="c"+(hot?" hot":"");}
 function renderDash(){const r=S.rules;let duty=0,p1=0,pr=0,gone=0,urg=0,past=0,est=0,na=0;
-  S.entries.forEach(e=>{const p=phase(e);if(p.na){na++;return;}duty+=p.duty;if(p.phase.startsWith("Phase 1"))p1+=p.duty;else if(p.phase.startsWith("Protest"))pr+=p.duty;else if(p.phase.startsWith("Deadline"))gone+=p.duty;if(p.days!=null){if(p.days<0)past++;else if(p.days<r.urg)urg++;}if(p.est)est++;});
+  S.entries.forEach(e=>{const p=phase(e);if(p.na){na++;return;}duty+=p.duty;if(p.phase.startsWith("Phase 1"))p1+=p.duty;else if(p.phase.startsWith("Protest"))pr+=p.duty;else if(p.phase.startsWith("Phase 3"))gone+=p.duty;if(p.days!=null){if(p.days<0)past++;else if(p.days<r.urg)urg++;}if(p.est)est++;});
   const gross=(p1*r.fee1+pr*r.fee2)*r.real,net=gross*(1-r.brok);const exposure=S.clients.reduce((a,c)=>a+clientStats(c).exposure,0);
-  const k=[["Clients",S.clients.length],["Est. exposure",money(exposure)],["IEEPA duty logged",money(duty)],["Phase 1 — filable now",money(p1),"good"],["Protest required",money(pr),pr?"warn":""],["Past deadline",money(gone),gone?"bad":""],["Urgent entries",urg,urg?"warn":""],["Past deadline (#)",past,past?"bad":""],["Estimated liq. dates",est,est?"warn":""],["Non-IEEPA lines excluded",na],["Expected gross fee",money(gross)],["Expected net fee",money(net),"good"]];
+  const k=[["Clients",S.clients.length],["Est. exposure",money(exposure)],["IEEPA duty logged",money(duty)],["Phase 1 — filable now",money(p1),"good"],["Protest required",money(pr),pr?"warn":""],["Phase 3 · contested",money(gone),gone?"bad":""],["Urgent entries",urg,urg?"warn":""],["Past deadline (#)",past,past?"bad":""],["Estimated liq. dates",est,est?"warn":""],["Non-IEEPA lines excluded",na],["Expected gross fee",money(gross)],["Expected net fee",money(net),"good"]];
   document.getElementById("kpis").innerHTML=k.map(([l,v,c])=>`<div class="kpi ${c||""}"><div class="l">${l}</div><div class="v">${v}</div></div>`).join("");
   const up=S.entries.map(e=>({e,p:phase(e)})).filter(x=>x.p.days!=null&&x.p.days>=0&&!x.p.na).sort((a,b)=>a.p.days-b.p.days).slice(0,14);
   const maxd=Math.max(30,...up.map(x=>x.p.days));
@@ -299,7 +300,7 @@ function findings(name){const c=S.clients.find(x=>x.company===name);if(!c)return
   <div class="tw"><table><tr><th>Category</th><th class="n">IEEPA duty</th><th>What it means</th><th>Action</th></tr>
   <tr><td>Filable now in CAPE (Phase 1)</td><td class="n">${money(st.p1)}</td><td>Unliquidated, or liquidated within ${r.p1} days</td><td>Partner broker files the declaration. ACE/ACH enrolment: ${esc(c.ach)}</td></tr>
   <tr><td>Protest required</td><td class="n">${money(st.pr)}</td><td>Liquidated more than ${r.p1} days ago; ${r.prot}-day window open</td><td>Protest per entry${st.next&&st.next.p.phase.startsWith("Protest")?` — next deadline ${fmt(st.next.p.deadline)} (${st.next.p.days} days)`:""}</td></tr>
-  <tr><td>Deadline passed</td><td class="n">${money(st.gone)}</td><td>Protest window closed</td><td>Assessed with counsel; litigation only</td></tr>
+  <tr><td>Phase 3 — finally liquidated</td><td class="n">${money(st.gone)}</td><td>Protest window closed; CAPE Phase 3 accepts these but the government has appealed</td><td>File it; do not count it until the appeal resolves</td></tr>
   <tr><td style="border:0"></td><td class="n" style="border-top:2px solid var(--ink);border-bottom:0">${money(st.total)}</td><td style="border:0"></td><td style="border:0"></td></tr></table></div>
   <h2>Our fee if recovered</h2><p>${Math.round(r.fee1*100)}% of Phase 1 refunds and ${Math.round(r.fee2*1000)/10}% of protest recoveries, payable only when funds arrive. Indicative fee on full recovery: <strong>${money(st.fee)}</strong>. CBP pays refunds with interest; its stated timeline of 60–90 days after acceptance should be treated as quarters, not weeks.</p>
   <h2>What we need next</h2><p>1. Confirmed ACE portal access and ACH refund enrolment. ${st.est?`2. ACE liquidation dates for ${st.est} entries. 3. `:"2. "}Your signature on the partner broker's filing authorization.${c.bucket.startsWith("A")?` ${st.est?"4":"3"}. Introductions to your US customers who cleared your goods themselves${st.consignees.length?` — we count ${st.consignees.length} on your entries`:""}; they are likely owed refunds too.`:""}</p>
