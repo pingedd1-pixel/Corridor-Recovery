@@ -24,7 +24,8 @@ UA={"User-Agent":"CorridorRadar/0.1 (contact: hello@corridorrecovery.com)"}
 # Sector priors: share of Canadian exports NOT CUSMA-qualified in early 2025 (rough; refine from StatCan/US Census by HS)
 SECTOR_NONCUSMA={"furniture":0.70,"food":0.55,"beverage":0.60,"packaging":0.50,"machinery":0.45,"plastics":0.50,"building products":0.55,"apparel":0.65,"sporting goods":0.60,"electrical":0.45,"paper":0.40,"chemicals":0.35,"other":0.45}
 
-def edgar_fts(query='"IEEPA" AND ("refund" OR "tariff refund")', forms=("10-Q","10-K","8-K"), max_pages=5):
+def edgar_fts(query='"IEEPA" "refund"', forms=("10-Q","10-K","8-K"), max_pages=5):
+    # EDGAR full-text search returns 0 hits for a parenthesised OR group; plain quoted terms are AND-ed (930 hits on 2026-09-14).
     """SEC EDGAR full-text search. Returns filings mentioning IEEPA refunds (last ~12 months)."""
     rows=[]
     for page in range(1,max_pages+1):
