@@ -1,4 +1,4 @@
-# Corridor Recovery — build spec for Claude Code (v0.3.1, real stack)
+# Corridor Recovery — build spec for Claude Code (v0.4, real stack — rule changes and additions approved 2026-09-14)
 Read this file fully before writing code. The prototype `corridor-recovery-desk-v02.html` is the functional reference: same engine, same documents, same rules. Rebuild it as a private multi-user web app.
 
 ## Non-negotiables
@@ -44,4 +44,26 @@ From entries, aggregate consignee names per source client; show duty carried on 
 Dashboard KPIs as in prototype + monthly client report (PDF): entries by phase, filings made, refunds received, fees invoiced, next deadlines. Fee ledger: expected vs invoiced vs paid, by partner broker share.
 
 ## Milestones
-M1 (week 1): schema, auth/roles, CSV ingestion, engine, tasks, dashboard — parity with v0.2. M2 (week 2): documents → PDF, bucket B, audit log, backups. M3 (week 3–4): rule-feed worker with approval UI, PDF ingestion, notifications, client portal (read-only). Ship each milestone behind a private URL; PK reviews on the trial client's real data.
+M1 (week 1): schema, auth/roles, CSV ingestion, engine, tasks, dashboard — parity with v0.2.1. M2 (week 2): documents → PDF, **client submission + chain of custody**, bucket B, audit log, backups. M3 (week 3–4): rule-feed worker with approval UI, PDF ingestion, notifications, client portal (read-only), **rights ledger**, **Origin module**. Ship each milestone behind a private URL; PK reviews on the trial client's real data. The 2026-09-14 additions (below) do not start before M1 parity is green.
+## Rule changes approved 2026-09-14 (PK) — seed these in the `rules` table
+- phase label: entries past the 180-day protest window are "Phase 3 — finally liquidated (contested on appeal)", not "litigation only". Filed via CAPE Phase 3; excluded from client-facing "recoverable now" totals until the appeal resolves. Source: GingerControl guide 2026-07-23; BDO FAQ 2026-08-11.
+- Phase 2 (reconciliation-flagged entries) opened 2026-06-29: entries with a reconciliation flag route to Phase 2, not protest. Source: BDO.
+- Step 3 document: ACE ES-003 import history report (client's own ACE) or broker entry report. Source: GingerControl.
+- Accepted declarations cannot be amended → task rule "no filing until entry list complete". Source: Aprio 2026-05-06.
+- Refund payee may be designated via CBP Form 4811. Source: Aprio.
+- Phase 1 excludes drawback/reconciliation-flagged and surety-paid entries → classification flags. Source: Aprio.
+Calibration for timelines (public filings, Q2 2026): clean Phase 1 claims paid in ~3–4 months with ~3.4% interest (Arhaus, FIGS); mid-size claims lag (Bark); claims sold pre-filing at ~73¢ (Accuray).
+
+## Additions approved 2026-09-14 — client submission, chain of custody, rights ledger
+### Client submission (no login required)
+- Per-client **magic upload link** (signed, expiring, revocable) sent from the engagement email. Drag-and-drop for duty statements, broker invoices, ES-003 exports, BOMs, supplier declarations. Optional client login later; the link is the default because it is the least human steps.
+- On upload: SHA-256 hash, size, MIME, uploader (link id), timestamp (UTC), client IP, stored immutably (object storage with versioning; no delete, only supersede). Virus scan. Acknowledgement email with the hash.
+- **Chain of custody view** per document: who uploaded, when, hash, every read/export by whom, every derived artifact (parsed rows, findings sheet) linked back to the source file id. Exportable as a PDF appendix for verifications and disputes.
+- Nothing is ever "lost": every claim figure traces to a source file id + row id + rule version.
+### Rights ledger (contingent receivables) — new module
+- For every entry ingested, record the **tariff authority** per Chapter 99 line: IEEPA (9903.01), Section 122 (Proclamation 11012, 2026-02-24 → 07-24), Section 301 forced-labour (from 2026-07-24), Section 338 (from 2026-08-22), 232, 301 China, AD/CVD.
+- Maintain per-authority **contingent status**: IEEPA = refundable (CAPE); 122 = struck down at CIT 2026-05-07, stayed on appeal, relief limited to plaintiffs; 301-FL = challenged (Burlap & Barrel v. Greer, filed 2026-07-24, class action); 338 = untested. Status comes from the rules table (rule feed proposes, PK approves).
+- **Preservation clocks**: for each non-IEEPA contested authority, compute liquidation (ACE or estimated) + 180 days = protest deadline to preserve refund rights; generate tasks "preserve rights: protest entry X by date Y" when status = contested and deadline < 120 days. Batch protest packages for the partner broker.
+- Client-facing: a "contingent receivables" section on the findings sheet — duties paid under contested authorities, what would need to be true for a refund, and what we are doing to preserve the right. Never counted as recoverable.
+### Origin module (Corridor Origin)
+- Product records: HS, BOM lines (input HS, origin, supplier, cost), rule of origin applied (tariff shift / RVC-TV / RVC-NC), computed result, determination document (signed by a named person), certification (9 data elements, blanket period), supplier-declaration tracker, 5-year record retention, annual re-cert task, "rules changed → re-run" trigger from the rule feed.

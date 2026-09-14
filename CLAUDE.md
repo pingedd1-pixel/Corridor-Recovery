@@ -26,9 +26,10 @@ You are building the Corridor Recovery desk: software that finds, phases, and ma
 - Secrets in env only. `.env.example` is committed; `.env` never is.
 
 ## Milestones
-M1 (week 1): schema, auth/roles, CSV ingestion, engine parity with v0.2, tasks, dashboard.
-M2 (week 2): documents → PDF on the template, bucket B, audit log, backups.
-M3 (weeks 3–4): rule-feed worker + approval UI, PDF ingestion via Claude with confidence gate, notifications, read-only client view.
+M1 (week 1): schema, auth/roles, CSV ingestion, engine parity with v0.2.1, tasks, dashboard.
+M2 (week 2): documents → PDF on the template, client submission + chain of custody, bucket B, audit log, backups.
+M3 (weeks 3–4): rule-feed worker + approval UI, PDF ingestion via Claude with confidence gate, notifications, read-only client view, rights ledger (contested tariff authorities), Origin module.
+The additions approved 2026-09-14 (BUILD_SPEC "Additions approved 2026-09-14") do not start before M1 parity is green.
 Ship each behind a private URL. PK reviews on the simulation fixture first, then the trial client's real data.
 
 ## How to talk to us

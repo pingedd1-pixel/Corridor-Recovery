@@ -42,7 +42,7 @@ test("/api/state reproduces the prototype: phases, deadlines, KPIs, tasks", asyn
   const got = body.entries.map(e => [e.entry, e.computed.cls.kind, e.computed.phase, e.computed.deadline, e.computed.days, e.computed.est, e.computed.duty]);
   assert.deepEqual(got, expected.entries);
   const k = Object.fromEntries(body.dash.kpis.map(([l, v]) => [l, v]));
-  assert.equal(k["IEEPA duty logged"], "$726,900"); assert.equal(k["Phase 1 — filable now"], "$427,350"); assert.equal(k["Protest required"], "$174,550"); assert.equal(k["Past deadline"], "$125,000");
+  assert.equal(k["IEEPA duty logged"], "$726,900"); assert.equal(k["Phase 1 — filable now"], "$427,350"); assert.equal(k["Protest required"], "$174,550"); assert.equal(k["Phase 3 · contested"], "$125,000");
   assert.equal(k["Estimated liq. dates"], 7); assert.equal(k["Non-IEEPA lines excluded"], 1); assert.equal(k["Urgent entries"], 3); assert.equal(k["Expected net fee"], "$49,205");
   assert.deepEqual(body.tasks.map(t => ({ id: t.id, who: t.who, hot: t.hot, t: t.t })), expected.tasks);
   assert.equal(body.clients[0].stats.total, 726900);
