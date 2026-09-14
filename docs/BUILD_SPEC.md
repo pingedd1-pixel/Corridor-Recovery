@@ -5,7 +5,7 @@ Read this file fully before writing code. The prototype `corridor-recovery-desk-
 1. **The engine is the product.** `phase(entry)` logic exactly as in the prototype: IEEPA classification by Chapter 99 HTS (9903.01.xx refundable; 9903.80/81/85/78, 9903.88–91, 9903.94 excluded); liquidation date from ACE wins, else estimated = entry date + lag and the row is flagged `estimated`; Phase 1 if unliquidated or ≤ P1 days post-liquidation; Protest if ≤ PROT days; else Passed. Every rule is a row in a `rules` table with effective dates and a source — never a constant in code.
 2. **Audit trail on every figure.** Every duty amount, phase, deadline and fee must be traceable to entry rows + rule versions. Store rule version id on each computed result.
 3. **No client-facing figure while any of the client's IEEPA entries is `estimated`.** Enforce in the findings-sheet generator (hard block, not a warning).
-4. **Documents on the Corridor template.** Findings sheet, cover note, bucket-B intro email, engagement letter, authorization — HTML → PDF, reference `CM-<TYPE>-<YYYY>-<NNN>`, "As of" date, footer line. Fonts: IBM Plex Sans.
+4. **Documents on the Corridor template.** Findings sheet, cover note, bucket-B intro email, engagement letter, authorization, mutual NDA, filing-broker services agreement — HTML → PDF, reference `CM-<TYPE>-<YYYY>-<NNN>`, "As of" date, footer line. Fonts: IBM Plex Sans. **The counsel-draft templates (CM-EL/AU/NDA/BSA-2026-TEMPLATE, 2026-09-13) are the source of truth for legal wording** (PK 2026-09-14); the playbook follows them, not the other way round. Every bracketed term in a template is a `rules` row (see "Legal terms"), never a constant.
 5. **Roles.** PK (all), Desk (all except delete), Sales (clients/tasks, no entries detail), Partner broker (only their assigned clients' entries + filing status), Client (read own findings sheet + upload documents). Row-level security.
 6. **Privacy.** Customs entry data is confidential: encrypted at rest, TLS, access logged, retention per engagement, no third-party analytics. BC PIPA applies.
 
@@ -32,7 +32,7 @@ users(id, name, role, email), audit_log(id, user_id, action, table, row_id, befo
 - De-dupe on (client_id, entry_no).
 
 ## Rule feed worker (Playwright, daily 06:00 PT)
-Sources: CBP CSMS (cbp.gov/trade/automated/cargo-systems-messaging-service), CBP CAPE page, Federal Register (tariff/CBP), CBSA Customs Notices, Canada Gazette Part II (remission orders), Dept of Finance news. For each new item: store raw, call Claude with the bulletin prompt from the prototype (JSON out), create a `bulletins` row. Nothing changes a rule automatically — PK approves in the UI; approval writes a new `rules` row with effective dates and triggers recompute + task regeneration + a "what changed for you" note per affected client.
+Sources: CBP CSMS (cbp.gov/trade/automated/cargo-systems-messaging-service), CBP CAPE page, Federal Register (tariff/CBP), CBSA Customs Notices, Canada Gazette Part II (remission orders), Dept of Finance news. For each new item: store raw, call Claude with the bulletin prompt from the prototype (JSON out), create a `bulletins` row. Nothing changes a rule automatically — PK approves in the UI; approval writes a new `rules` row with effective dates and triggers recompute + task regeneration + a "what changed for you" note per affected client. **Counsel loop (PK 2026-09-14):** answers from the lawyer on the four templates come back to FOUNDER as rule-change proposals in the vault; PK approves; Claude Code seeds the rows. Nothing from counsel goes straight into the repo.
 
 ## Task engine
 Port `tasks()` from the prototype verbatim as the first ruleset, then add: engagement letter unsigned > 7 days; findings sheet sent > 10 days with no reply; CAPE filed > 45 days without acceptance; protest deadline < 14 days and not filed (hot, notifies PK by email/SMS); refund landed and no invoice.
@@ -41,7 +41,7 @@ Port `tasks()` from the prototype verbatim as the first ruleset, then add: engag
 From entries, aggregate consignee names per source client; show duty carried on the source client's goods; one-click promote to client (bucket B, referred_by set); generate intro email under the source client's name; batch export of B prospects for the US partner broker.
 
 ## Reporting
-Dashboard KPIs as in prototype + monthly client report (PDF): entries by phase, filings made, refunds received, fees invoiced, next deadlines. Fee ledger: expected vs invoiced vs paid, by partner broker share.
+Dashboard KPIs as in prototype + monthly client report (PDF): entries by phase, filings made, refunds received, fees invoiced, next deadlines. Fee ledger: expected vs invoiced vs paid, per client and per filing broker — models the broker's **flat per-client filing fees** (declaration blocks, per-protest) **plus** the broker's share of Corridor's collected fee, as in CM-BSA-2026-TEMPLATE §2 (PK 2026-09-14).
 
 ## Milestones
 M1 (week 1): schema, auth/roles, CSV ingestion, engine, tasks, dashboard — parity with v0.2.1. M2 (week 2): documents → PDF, **client submission + chain of custody**, bucket B, audit log, backups. M3 (week 3–4): rule-feed worker with approval UI, PDF ingestion, notifications, client portal (read-only), **rights ledger**, **Origin module**. Ship each milestone behind a private URL; PK reviews on the trial client's real data. The 2026-09-14 additions (below) do not start before M1 parity is green.
@@ -67,3 +67,19 @@ Calibration for timelines (public filings, Q2 2026): clean Phase 1 claims paid i
 - Client-facing: a "contingent receivables" section on the findings sheet — duties paid under contested authorities, what would need to be true for a refund, and what we are doing to preserve the right. Never counted as recoverable.
 ### Origin module (Corridor Origin)
 - Product records: HS, BOM lines (input HS, origin, supplier, cost), rule of origin applied (tariff shift / RVC-TV / RVC-NC), computed result, determination document (signed by a named person), certification (9 data elements, blanket period), supplier-declaration tracker, 5-year record retention, annual re-cert task, "rules changed → re-run" trigger from the rule feed.
+
+## Legal terms approved 2026-09-14 (PK) — rule rows, defaults, bands
+Adopted from the counsel drafts; where the playbook or this spec said otherwise, this list wins and the playbook is updated to match (see `docs/PLAYBOOK_CHANGES_2026-09-14.md`).
+- `fee_protest` — protest / complex US refund fee. Default **22.5%**; allowed band **20–25%** (`fee_protest_min`, `fee_protest_max`). Never below 20%; below that, walk away (playbook §6 stands).
+- `fee_canadian_recovery` — Canadian surtax remission / relief / drawback. Default **25%**.
+- `engagement_exclusivity_months` — **12** months from signature, then until matters opened in the term close.
+- `invoice_due_days` — **15** days from Corridor's invoice on receipt of funds. No retainer; no fee unless funds arrive.
+- `data_deletion_days` — NDA: delete or return customs data **30** days after the last matter closes, except as retained by law. Chain-of-custody storage (M2) uses this rule.
+- Authorization: the **broader** CM-AU scope is adopted — Corridor may obtain records from brokers, forwarders and the client's systems, engage and instruct Filing Brokers, and communicate with CBP/CBSA through them; the client signs any broker POA. Validity is a rule row (`authorization_validity_months`, still a placeholder pending counsel).
+- Still placeholders pending counsel: broker flat fees and share (CM-BSA §2), non-circumvention months, BSA term, dispute clause, BSA governing law, authorization validity.
+
+## M4 — not scheduled (parked 2026-09-14)
+- **Multi-broker routing with batch packaging.** Route each client's filings to a partner broker by jurisdiction, port and capacity; package declarations and protests per broker in batches with a manifest; track acceptance per batch.
+- **Automated entry pulls via partner-broker ACE access.** With the client's authorization, the broker's ACE account pulls ES-003 / entry summaries on a schedule; ingestion path identical to CSV; liquidation source `ace`.
+- **Multi-seller pipelines with ownership.** Each prospect and client has an owner (PK, Sales, Partner 2); tasks and the fee ledger split by owner; Bucket B introductions credited to the source client's owner.
+- **"ACH-stuck refunds" workflow.** Accepted-but-unpaid CAPE refunds (the #1 reason approved refunds don't get paid): detect accepted > N days with no payment → ACE/ACH enrolment walk-through with the client → tracked to payment. Flat fee, not contingent; a rule row.
