@@ -84,8 +84,10 @@ def score(r):
     s=0.0
     sec=SECTOR_NONCUSMA.get(r.get("sector","other"),0.45)
     s+=40*sec                                  # exposure prior
-    if r["source"]=="EDGAR": s+=20             # disclosed exposure
-    if r["source"]=="CIT": s+=25               # sued = exposed + deadlines matter
+    srcs=set(r["source"].split("|"))           # merged rows carry "EDGAR|CIT|..."
+    if "EDGAR" in srcs: s+=20                  # disclosed exposure
+    if "CIT" in srcs: s+=25                    # sued = exposed + deadlines matter
+    if len(srcs)>1: s+=5                       # seen in more than one source
     if r.get("region")=="CA": s+=10            # our home market
     if r.get("province","") in ("BC","AB"): s+=10
     if r.get("contact") or r.get("phone"): s+=10
@@ -104,12 +106,14 @@ def main():
         k=re.sub(r"[^a-z0-9]","",r["company"].lower())[:40]
         if not k: continue
         if k in seen:
-            seen[k]["source"]+="|"+r["source"]; seen[k]["hook"]+=" / "+r["hook"]
+            if r["source"] not in seen[k]["source"].split("|"): seen[k]["source"]+="|"+r["source"]
+            if r["hook"] not in seen[k]["hook"]: seen[k]["hook"]+=" / "+r["hook"]
+            seen[k]["mentions"]=seen[k].get("mentions",1)+1
         else: seen[k]=r
     out=list(seen.values())
     for r in out: r["score"]=score(r); r["stage"]="Lead"; r["scanned"]=TODAY
     out.sort(key=lambda r:-r["score"])
-    cols=["score","company","bucket","region","province","city","sector","source","hook","url","website","contact","phone","stage","scanned"]
+    cols=["score","company","bucket","region","province","city","sector","source","mentions","hook","url","website","contact","phone","stage","scanned"]
     with open(OUT,"w",newline="",encoding="utf-8") as f:
         w=csv.DictWriter(f,fieldnames=cols,extrasaction="ignore"); w.writeheader(); w.writerows(out)
     print(f"wrote {OUT}: {len(out)} prospects")
