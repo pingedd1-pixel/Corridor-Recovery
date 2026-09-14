@@ -7,7 +7,11 @@ import { fileURLToPath } from "node:url";
 import Papa from "papaparse";
 import { loadState, snapshot, audit, recompute } from "./services/state.js";
 import { parseCsv, ingestRows, headersFingerprint, autoMap } from "./ingest/mapping.js";
-import { generateFindings, renderFindings, clientStats, FindingsBlockedError, phase, fmt, today } from "./engine/index.js";
+import { renderFindings, clientStats, FindingsBlockedError, phase, fmt, today } from "./engine/index.js";
+import { generateDocument, listDocuments, getDocument } from "./documents/index.js";
+import { TYPES } from "./documents/types.js";
+import { closePdf } from "./documents/pdf.js";
+import { createReadStream } from "node:fs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -101,21 +105,21 @@ app.post("/api/tasks/done", async (req, reply) => {
   return row;
 });
 
-// ---------- findings (hard block lives in generateFindings) ----------
-app.get("/api/findings/:clientId", async (req, reply) => {
-  const s = await loadState(db, asOf(req));
-  const c = s.clients.find(x => String(x.id) === String(req.params.clientId)); if (!c) return reply.code(404).send({ error: "not found" });
-  const year = s.t.getFullYear();
-  const n = Number((await db.query("SELECT count(*) AS n FROM documents WHERE type='FS' AND ref LIKE $1", [`CM-FS-${year}-%`])).rows[0].n) + 1;
-  const ref = `CM-FS-${year}-${String(n).padStart(3, "0")}`;
-  const { html, stats } = generateFindings(c, s.entries, s.rules, ref, s.t); // throws FindingsBlockedError → 409
-  if (req.query.save === "1") {
-    const row = (await db.query("INSERT INTO documents(client_id, ref, type, html, rule_version_id) VALUES ($1,$2,'FS',$3,$4) RETURNING id, ref, created_at", [c.id, ref, html, s.ruleVersionId])).rows[0];
-    await audit(db, "insert", "documents", row.id, null, { ref, client_id: c.id, rule_version_id: s.ruleVersionId });
-    return { ref, html, saved: true, ruleVersionId: s.ruleVersionId, total: stats.total };
-  }
-  return { ref, html, saved: false, ruleVersionId: s.ruleVersionId, total: stats.total };
+// ---------- documents (BUILD_SPEC §4). Hard block for figure-bearing types lives in generateDocument ----------
+app.get("/api/documents/types", async () => Object.entries(TYPES).map(([type, t]) => ({ type, name: t.name, carriesFigures: t.carriesFigures, needs: t.needs })));
+app.get("/api/documents", async req => listDocuments(db, req.query.clientId ? Number(req.query.clientId) : null));
+app.post("/api/documents", async (req, reply) => {
+  const { clientId, type, params, pdf } = req.body || {}; if (!clientId || !type) return reply.code(400).send({ error: "clientId and type are required" });
+  const d = await generateDocument(db, { clientId, type, params: params || {}, asOf: asOf(req), pdf: pdf !== false }); // throws FindingsBlockedError → 409
+  return d;
 });
+app.get("/api/documents/:id", async (req, reply) => { const d = await getDocument(db, req.params.id); if (!d) return reply.code(404).send({ error: "not found" }); return d; });
+app.get("/api/documents/:id/pdf", async (req, reply) => {
+  const d = await getDocument(db, req.params.id); if (!d || !d.pdfPath) return reply.code(404).send({ error: "no PDF for this document" });
+  reply.header("Content-Type", "application/pdf").header("Content-Disposition", `inline; filename="${d.ref}.pdf"`);
+  return reply.send(createReadStream(d.pdfPath));
+});
+app.addHook("onClose", async () => { await closePdf(); });
 // Preview (internal, never client-facing): renders even when blocked, so the desk can see the draft. Marked as such.
 app.get("/api/findings/:clientId/preview", async (req, reply) => {
   const s = await loadState(db, asOf(req));

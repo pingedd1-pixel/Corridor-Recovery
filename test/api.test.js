@@ -66,19 +66,19 @@ test("task done flags persist by key across regeneration", async () => {
 });
 
 test("HARD BLOCK: client-facing findings return 409 while 7 IEEPA entries are estimated; internal draft says so", async () => {
-  const r = await j("GET", `/api/findings/${clientId}${ASOF}`);
+  const r = await j("POST", `/api/documents${ASOF}`, { clientId, type: "FS" });
   assert.equal(r.status, 409); assert.equal(r.body.code, "FINDINGS_BLOCKED"); assert.equal(r.body.estimated, 7);
   assert.equal((await db.query("SELECT count(*)::int AS n FROM documents")).rows[0].n, 0, "nothing stored");
   const d = await j("GET", `/api/findings/${clientId}/preview${ASOF}`);
   assert.equal(d.body.blocked, true); assert.ok(d.body.html.includes("DRAFT — not for release"));
 });
 
-test("block lifts once ACE dates land; document is saved with ref CM-FS-YYYY-NNN and rule version", async () => {
+test("block lifts once ACE dates land; findings sheet is generated as a document with ref CM-FS-YYYY-NNN and rule version", async () => {
   await db.query("UPDATE entries SET liquidation_date = entry_date + 314, liquidation_source='ace' WHERE liquidation_source='estimated'");
-  const r = await j("GET", `/api/findings/${clientId}${ASOF}&save=1`);
-  assert.equal(r.status, 200); assert.equal(r.body.ref, "CM-FS-2026-001"); assert.equal(r.body.saved, true); assert.equal(r.body.total, 726900);
-  const doc = (await db.query("SELECT ref, type, rule_version_id FROM documents")).rows[0];
-  assert.equal(doc.ref, "CM-FS-2026-001"); assert.equal(doc.type, "FS"); assert.ok(doc.rule_version_id);
+  const r = await j("POST", `/api/documents${ASOF}`, { clientId, type: "FS", params: {}, pdf: false });
+  assert.equal(r.status, 200); assert.equal(r.body.ref, "CM-FS-2026-001"); assert.ok(r.body.html.includes("IEEPA duty identified: <strong>$726,900</strong>"));
+  const doc = (await db.query("SELECT ref, type, rule_version_id, to_char(as_of,'YYYY-MM-DD') AS as_of FROM documents")).rows[0];
+  assert.equal(doc.ref, "CM-FS-2026-001"); assert.equal(doc.type, "FS"); assert.ok(doc.rule_version_id); assert.equal(doc.as_of, "2026-09-13");
   const s = await j("GET", "/api/state" + ASOF);
   assert.equal(Object.fromEntries(s.body.dash.kpis.map(([l, v]) => [l, v]))["Estimated liq. dates"], 0);
 });

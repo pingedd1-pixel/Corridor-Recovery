@@ -10,10 +10,10 @@ let db;
 before(async () => { db = await openDb({ memory: true }); await migrate(db); });
 after(async () => { await db.close(); });
 
-test("migration 001 applies once and is idempotent", async () => {
+test("migrations apply once and are idempotent", async () => {
   assert.deepEqual(await migrate(db), []);
   const { rows } = await db.query("SELECT name FROM schema_migrations ORDER BY name");
-  assert.deepEqual(rows.map(r => r.name), ["001_init.sql"]);
+  assert.deepEqual(rows.map(r => r.name), ["001_init.sql", "002_documents.sql"]);
   const tables = (await db.query("SELECT table_name FROM information_schema.tables WHERE table_schema='public' ORDER BY 1")).rows.map(r => r.table_name);
   for (const t of ["clients", "entries", "rules", "rule_versions", "computed", "tasks", "documents", "bulletins", "prospects_b", "users", "audit_log", "broker_mappings"]) assert.ok(tables.includes(t), t);
 });
