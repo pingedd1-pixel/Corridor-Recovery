@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Corridor Metals — document standard v1</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#172033;      /* text, rules */
+    --paper:#FBFBF9;    /* page */
+    --alu:#C9CED3;      /* aluminium: secondary rules, table lines */
+    --alu-2:#EEF0F1;    /* light fill */
+    --copper:#9C4A1A;   /* the one brand accent */
+    --verdigris:#2F6F62;/* status: verified */
+    --amber:#8A6A12;    /* status: rough */
+    --slate:#5B6672;    /* status: unverified, muted text */
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--paper);color:var(--ink);font-family:"IBM Plex Sans",Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5}
+  body{padding:0 0 96px}
+  .wrap{max-width:920px;margin:0 auto;padding:0 32px}
+  header{padding:48px 0 0}
+  .mark{position:relative;padding:22px 0 22px 34px;border-top:3px solid var(--ink);border-bottom:3px solid var(--ink);display:flex;align-items:baseline;gap:0;letter-spacing:.06em;font-size:34px;line-height:1}
+  .mark::before{content:"";position:absolute;left:0;top:50%;width:14px;height:14px;transform:translateY(-50%);background:var(--copper)}
+  .mark b{font-weight:600}
+  .mark span{font-weight:300;margin-left:.45em}
+  .docline{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px 24px;padding:12px 0 0;color:var(--slate);font-size:14px}
+  .docline strong{color:var(--ink);font-weight:500}
+  h1{font-size:28px;font-weight:500;line-height:1.2;margin:56px 0 8px}
+  h2{font-size:20px;font-weight:500;margin:48px 0 12px;padding-top:16px;border-top:1px solid var(--alu)}
+  h3{font-size:16px;font-weight:600;margin:24px 0 6px}
+  p{max-width:68ch;margin:0 0 12px}
+  .lede{font-size:18px;font-weight:300;max-width:60ch;color:var(--ink)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+  .swatch{border:1px solid var(--alu);}
+  .swatch div{height:72px}
+  .swatch p{margin:0;padding:8px 10px;font-size:13px;line-height:1.35}
+  .swatch p b{display:block;font-weight:500}
+  .swatch p code{color:var(--slate);font-family:inherit}
+  .type-sample{border-left:2px solid var(--alu);padding-left:16px;margin:12px 0 20px}
+  .type-sample .t1{font-size:28px;font-weight:500;line-height:1.2}
+  .type-sample .t2{font-size:20px;font-weight:500}
+  .type-sample .t3{font-size:16px;font-weight:600}
+  .type-sample .body{font-size:16px;font-weight:400}
+  .type-sample .small{font-size:13px;color:var(--slate)}
+  .type-sample .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+  .tag{display:inline-block;font-size:12px;font-weight:500;line-height:1;padding:4px 7px;border-radius:2px;color:#fff;vertical-align:middle;margin-right:6px}
+  .tag.v{background:var(--verdigris)} .tag.r{background:var(--amber)} .tag.u{background:var(--slate)}
+  table{border-collapse:collapse;width:100%;margin:12px 0 20px;font-size:14px}
+  th{text-align:left;font-weight:500;color:var(--slate);border-bottom:2px solid var(--ink);padding:8px 10px 8px 0}
+  td{border-bottom:1px solid var(--alu);padding:9px 10px 9px 0;vertical-align:top}
+  td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;padding-right:0}
+  .anatomy{border:1px solid var(--alu);background:#fff;padding:28px 32px;margin:16px 0 8px;font-size:14px}
+  .anatomy .mk{font-size:20px;padding:12px 0 12px 24px}
+  .anatomy .mk::before{width:9px;height:9px}
+  .anatomy .foot{margin-top:28px;padding-top:8px;border-top:1px solid var(--alu);display:flex;justify-content:space-between;color:var(--slate);font-size:12px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:32px}
+  @media(max-width:700px){.two{grid-template-columns:1fr}.mark{font-size:24px}}
+  ul{padding-left:20px;max-width:68ch} li{margin:4px 0}
+  .sig{background:#fff;border:1px solid var(--alu);padding:16px 20px;font-size:14px;max-width:420px}
+  .sig .n{font-weight:600} .sig .r{color:var(--slate)}
+  .sig .l{margin-top:10px;padding-top:8px;border-top:2px solid var(--ink);letter-spacing:.06em;font-size:13px}
+  .sig .l b{font-weight:600} .sig .l span{font-weight:300}
+  .sig .l i{display:inline-block;width:8px;height:8px;background:var(--copper);margin-right:8px;vertical-align:middle}
+  code{font-family:inherit;background:var(--alu-2);padding:1px 5px;border-radius:2px;font-size:.95em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="mark"><b>CORRIDOR</b><span>METALS</span></div>
+    <div class="docline">
+      <div><strong>Document standard</strong> v1.0</div>
+      <div>Prepared by FOUNDER for PK</div>
+      <div>As of 11 September 2026</div>
+    </div>
+  </header>
+
+  <h1>The brand is the paper.</h1>
+  <p class="lede">Every document we send will be read by a yard owner on a phone, a procurement manager in Gujarat, or a bank officer checking an LC line by line. It has to look like it was made by people who don't make mistakes. Nothing on the page decorates; everything on the page informs.</p>
+
+  <h2>Name and mark</h2>
+  <div class="two">
+    <div>
+      <p><strong>Corridor Metals</strong> — legally, "[numbered co.] B.C. Ltd. dba Corridor Metals". The name says the job: we move metal down corridors that others can't or won't.</p>
+      <p>The mark is two parallel rules — the corridor — with the wordmark set in the lane and a single copper square: the lot, in transit. It is drawn in type and rules, so it reproduces in Word, email, a PDF footer, or a WhatsApp profile without an image file.</p>
+    </div>
+    <div>
+      <p><strong>Rules for the mark</strong></p>
+      <ul>
+        <li>CORRIDOR in semibold, METALS in light, same size, same line. Never stacked, never in colour.</li>
+        <li>The copper square sits on the left, centred in the lane. It is the only copper on the page besides the words "Corridor Metals" in a signature.</li>
+        <li>Minimum clear space: the height of the lane, all sides.</li>
+        <li>No tagline. Not "global", not "West Coast", not "trusted". The counterparty decides that.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Colour</h2>
+  <p>Ink, paper, aluminium, one copper accent. Three status colours exist because the spec requires every figure to be labelled verified, rough, or unverified — colour is doing a job the reader needs, not a mood.</p>
+  <div class="grid">
+    <div class="swatch"><div style="background:#172033"></div><p><b>Ink</b><code>#172033</code>All text and structural rules.</p></div>
+    <div class="swatch"><div style="background:#FBFBF9;border-bottom:1px solid #C9CED3"></div><p><b>Paper</b><code>#FBFBF9</code>Page. Not cream, not grey.</p></div>
+    <div class="swatch"><div style="background:#C9CED3"></div><p><b>Aluminium</b><code>#C9CED3</code>Table lines, secondary rules.</p></div>
+    <div class="swatch"><div style="background:#9C4A1A"></div><p><b>Copper</b><code>#9C4A1A</code>The mark's square. Nothing else.</p></div>
+    <div class="swatch"><div style="background:#2F6F62"></div><p><b>Verdigris</b><code>#2F6F62</code>Status: verified.</p></div>
+    <div class="swatch"><div style="background:#8A6A12"></div><p><b>Amber</b><code>#8A6A12</code>Status: rough.</p></div>
+    <div class="swatch"><div style="background:#5B6672"></div><p><b>Slate</b><code>#5B6672</code>Status: unverified; muted text.</p></div>
+  </div>
+
+  <h2>Type</h2>
+  <p>One family: <strong>IBM Plex Sans</strong>. Free, installs on Mac, Windows and phones, has real tabular figures so columns of tonnes and dollars line up, and reads as engineered rather than corporate. Fallback when it isn't installed: Arial. Never Calibri, never Times.</p>
+  <div class="type-sample">
+    <div class="t1">Agency agreement — aluminium scrap, CFR Nhava Sheva</div>
+    <div class="t2">2. Commission and payment</div>
+    <div class="t3">2.1 Rate</div>
+    <div class="body">The Principal pays the Agent two percent (2.0%) of the invoiced CFR value, payable within five banking days of the Principal's receipt of funds under the letter of credit.</div>
+    <div class="small num">Scale: 28 / 20 / 16 / 16 / 13 · weights 500 / 500 / 600 / 400 / 400 · line height 1.5 body, 1.2 titles · figures always tabular: 1,234.5 t   $2,525/t   23.4 t/box</div>
+  </div>
+
+  <h2>Document anatomy</h2>
+  <p>Every document, from a one-line WhatsApp PDF to a 12-page agency contract, carries the same five things in the same places. A reader who has seen one of our documents can navigate any other.</p>
+  <div class="anatomy">
+    <div class="mark mk"><b>CORRIDOR</b><span>METALS</span></div>
+    <div class="docline" style="font-size:13px">
+      <div><strong>Desk note</strong> 2026-W37</div>
+      <div>Ref CM-DN-2026-037</div>
+      <div>To: distribution list A</div>
+      <div>As of 11 Sep 2026</div>
+    </div>
+    <p style="margin-top:24px;font-size:20px;font-weight:500">EU authorised-destination list lands 21 November</p>
+    <p>Indian secondary smelters lose direct access to EU aluminium scrap from 21 May 2027 unless India is on the list. <span class="tag v">Verified</span>Reuters, 11 Sep 2026. CFR Nhava Sheva for US-origin Tense printed $2,525/t on 4 July. <span class="tag r">Rough</span>BigMint via AL Circle; no September print yet.</p>
+    <div class="foot"><div>Corridor Metals is a trade name of [1234567 B.C. Ltd.]</div><div>Figures are dated and sourced; rough and unverified figures are marked.</div><div>Page 1 of 1</div></div>
+  </div>
+  <table>
+    <tr><th style="width:26%">Element</th><th>Rule</th></tr>
+    <tr><td>Mark</td><td>Top of page one only. Never on continuation pages; the footer carries the name.</td></tr>
+    <tr><td>Document line</td><td>Type, reference, recipient, and "As of" date on one line under the mark. The "As of" date is mandatory — the spec requires it and a bank will look for it.</td></tr>
+    <tr><td>Reference</td><td><code>CM-&lt;type&gt;-&lt;yyyy&gt;-&lt;nnn&gt;</code>. Types: DN desk note, AG agency agreement, CA commission agreement, OF offer, LOI, CT contract, INV invoice, CERT supplier certificate, PM post-mortem. Same string is the file name.</td></tr>
+    <tr><td>Status tags</td><td>Any figure a counterparty could act on carries <span class="tag v">Verified</span><span class="tag r">Rough</span> or <span class="tag u">Unverified</span> and a source and date. A figure without a tag is a figure we'll be asked about.</td></tr>
+    <tr><td>Footer</td><td>Legal name, the figures sentence, page x of y. Nothing else. No address block, no slogan.</td></tr>
+  </table>
+
+  <h2>Tables and numbers</h2>
+  <p>Tables are where a broker earns trust. Left-align text, right-align numbers, one unit per column stated in the header, no currency symbols repeated down a column. Totals get a top rule, not bold.</p>
+  <table>
+    <tr><th>Grade</th><th class="n">Qty, t</th><th class="n">CFR, $/t</th><th class="n">Value, $</th><th>Basis</th></tr>
+    <tr><td>Taint/Tabor HRB, 3–5% att.</td><td class="n">115.0</td><td class="n">2,410</td><td class="n">277,150</td><td>Rough — BigMint 4 Jul, adj.</td></tr>
+    <tr><td>Extrusion 6063, 95/5</td><td class="n">46.0</td><td class="n">2,865</td><td class="n">131,790</td><td>Rough — BigMint 5 Feb</td></tr>
+    <tr><td style="border-bottom:0"></td><td class="n" style="border-top:2px solid #172033;border-bottom:0">161.0</td><td class="n" style="border-top:2px solid #172033;border-bottom:0"></td><td class="n" style="border-top:2px solid #172033;border-bottom:0">408,940</td><td style="border-bottom:0"></td></tr>
+  </table>
+
+  <h2>Voice</h2>
+  <div class="two">
+    <div>
+      <p><strong>Write like this</strong></p>
+      <ul>
+        <li>Lead with the number and the call.</li>
+        <li>Short sentences. Active verbs. "We will book five boxes by 24 October" not "shipment is anticipated".</li>
+        <li>"Unverified", "rough", "as of" are required words, not hedges.</li>
+        <li>Every note ends with an ask.</li>
+      </ul>
+    </div>
+    <div>
+      <p><strong>Never</strong></p>
+      <ul>
+        <li>"Trusted partner", "world-class", "leverage", "synergy", "solutions".</li>
+        <li>Exclamation marks. Emojis in documents (WhatsApp chat is fine).</li>
+        <li>Photos of ships, globes, or handshakes.</li>
+        <li>Colour used for emphasis. Emphasis is a shorter sentence.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Email signature</h2>
+  <div class="sig">
+    <div class="n">PK</div>
+    <div class="r">Principal, Corridor Metals</div>
+    <div class="r">+1 604 000 0000 · pk@corridormetals.com</div>
+    <div class="l"><i></i><b>CORRIDOR</b> <span>METALS</span></div>
+  </div>
+  <p style="margin-top:12px">Plain text below the rule; no images, so it survives every mail client and every Indian corporate spam filter. The desk (FOUNDER) signs as "The desk, Corridor Metals" on notes and never on contracts.</p>
+
+  <h2>Files</h2>
+  <ul>
+    <li>Word template: <code>Corridor-Metals-Template.docx</code> — styles are named to match this page (Title, Doc line, Heading 1–2, Body, Table, Footer). Change the styles, not the paragraphs.</li>
+    <li>Mark: <code>corridor-metals-mark.svg</code> for web, WhatsApp, LinkedIn. Export PNG at 1280 wide for anything that can't take SVG.</li>
+    <li>Install IBM Plex Sans once on every machine: fonts.google.com/specimen/IBM+Plex+Sans.</li>
+    <li>File naming is the reference: <code>CM-DN-2026-037.pdf</code>. Send PDFs to counterparties, never .docx.</li>
+  </ul>
+  <p style="margin-top:32px;color:var(--slate);font-size:14px">v1.0. Change the standard by changing this page and the template together, and log it in the vault changelog.</p>
+</div>
+</body>
+</html>

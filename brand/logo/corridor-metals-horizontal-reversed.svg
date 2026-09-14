@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 120" width="640" height="120" role="img" aria-label="Corridor Metals">
+<rect width="640" height="120" fill="#172033"/>
+<rect x="24" y="30" width="592" height="3" fill="#FBFBF9"/><rect x="24" y="87" width="592" height="3" fill="#FBFBF9"/>
+<rect x="24" y="52" width="14" height="14" fill="#9C4A1A"/>
+<text x="56" y="70" font-family="'IBM Plex Sans', Arial, Helvetica, sans-serif" font-size="40" font-weight="600" letter-spacing="1.5" fill="#FBFBF9">CORRIDOR</text>
+<text x="312" y="70" font-family="'IBM Plex Sans', Arial, Helvetica, sans-serif" font-size="40" font-weight="300" letter-spacing="1.5" fill="#FBFBF9">METALS</text></svg>

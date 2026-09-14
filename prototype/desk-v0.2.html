@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Corridor Recovery Desk v0.2</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+:root{--ink:#172033;--paper:#FBFBF9;--alu:#C9CED3;--alu2:#EEF0F1;--copper:#9C4A1A;--verd:#2F6F62;--amber:#8A6A12;--slate:#5B6672;--red:#9C2A2A}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"IBM Plex Sans",Arial,sans-serif;font-size:14px;line-height:1.45}
+.wrap{max-width:1240px;margin:0 auto;padding:18px 22px 90px}
+.mark{position:relative;padding:12px 0 12px 26px;border-top:3px solid var(--ink);border-bottom:3px solid var(--ink);font-size:20px;letter-spacing:.06em;line-height:1;display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.mark::before{content:"";position:absolute;left:0;top:50%;width:10px;height:10px;transform:translateY(-50%);background:var(--copper)}
+.mark b{font-weight:600}.mark span{font-weight:300;margin-left:.4em}.mark small{font-size:12px;letter-spacing:0;color:var(--slate);font-weight:400}
+nav{display:flex;gap:2px;margin:12px 0 18px;border-bottom:1px solid var(--alu);overflow-x:auto}
+nav button{background:none;border:0;border-bottom:2px solid transparent;padding:10px 12px;font:inherit;font-weight:500;color:var(--slate);cursor:pointer;white-space:nowrap}
+nav button.on{color:var(--ink);border-bottom-color:var(--copper)}
+nav button .c{display:inline-block;min-width:18px;padding:1px 5px;border-radius:9px;background:var(--alu2);color:var(--ink);font-size:11px;margin-left:5px}
+nav button .c.hot{background:var(--red);color:#fff}
+h1{font-size:21px;font-weight:500;margin:0 0 6px}h2{font-size:15px;font-weight:600;margin:20px 0 8px}h3{font-size:14px;font-weight:600;margin:14px 0 6px}
+p{max-width:72ch;margin:0 0 10px}.muted{color:var(--slate)}.small{font-size:12px}.mono{font-variant-numeric:tabular-nums}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0 16px}
+.kpi{border:1px solid var(--alu);background:#fff;padding:10px 12px;cursor:default}.kpi .l{font-size:11px;color:var(--slate)}.kpi .v{font-size:20px;font-weight:500;font-variant-numeric:tabular-nums;margin-top:3px}
+.kpi.warn .v{color:var(--amber)}.kpi.bad .v{color:var(--red)}.kpi.good .v{color:var(--verd)}
+.tw{overflow-x:auto;background:#fff;border:1px solid var(--alu)}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:640px}
+th{text-align:left;font-weight:500;color:var(--slate);border-bottom:2px solid var(--ink);padding:8px 8px;white-space:nowrap;cursor:pointer;user-select:none;position:sticky;top:0;background:#fff}
+th.n,td.n{text-align:right;font-variant-numeric:tabular-nums}
+td{border-bottom:1px solid var(--alu);padding:7px 8px;vertical-align:top}
+tr:hover td{background:#F6F7F5}
+tr.urgent td{background:#FBEAE5}tr.gone td{color:var(--red)}tr.na td{color:var(--slate)}
+.tag{display:inline-block;font-size:11px;font-weight:500;padding:2px 6px;border-radius:2px;color:#fff;white-space:nowrap;margin-right:3px}
+.t-p1{background:var(--verd)}.t-pr{background:var(--amber)}.t-gone{background:var(--red)}.t-est{background:var(--slate)}.t-na{background:#8A8F96}.t-b{background:var(--ink)}
+.panel,form{border:1px solid var(--alu);background:#fff;padding:14px 16px;margin:8px 0 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px 14px}
+label{display:block;font-size:12px;color:var(--slate);margin-bottom:3px}
+input,select,textarea{width:100%;font:inherit;font-size:13px;padding:7px 8px;border:1px solid var(--alu);background:#fff;color:var(--ink)}
+textarea{min-height:100px}
+.b{background:var(--ink);color:#fff;border:0;padding:8px 13px;font:inherit;font-weight:500;cursor:pointer;margin-top:8px;border-radius:2px}
+.b.s{background:#fff;color:var(--ink);border:1px solid var(--ink)}.b.x{padding:3px 8px;margin:0;font-size:12px}.b:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.note{border-left:3px solid var(--copper);padding:6px 12px;background:var(--alu2);margin:10px 0;font-size:13px;max-width:none}
+.drop{border:2px dashed var(--alu);padding:22px;text-align:center;color:var(--slate);background:#fff;margin:8px 0}
+.drop.over{border-color:var(--copper);color:var(--ink)}
+.sheet{background:#fff;border:1px solid var(--alu);padding:28px 32px;margin-top:12px}.sheet .mark{font-size:17px}
+.docline{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--slate);padding:8px 0 14px}.docline strong{color:var(--ink);font-weight:500}
+.sheet h1{font-size:19px;margin:6px 0 10px}.sheet .foot{margin-top:22px;padding-top:8px;border-top:1px solid var(--alu);display:flex;justify-content:space-between;font-size:11px;color:var(--slate)}
+.tl{display:grid;grid-template-columns:110px 1fr;gap:6px 12px;align-items:center;font-size:12px}
+.bar{height:10px;background:var(--alu2);position:relative;border-radius:2px}
+.bar i{position:absolute;top:0;bottom:0;border-radius:2px}
+.task{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--alu)}
+.task input[type=checkbox]{width:auto;margin-top:3px}
+.task .who{font-size:11px;color:var(--slate)}
+.task.done{opacity:.45;text-decoration:line-through}
+.feed li{margin:6px 0}.feed .d{color:var(--slate);font-variant-numeric:tabular-nums;margin-right:8px}
+.search{max-width:320px}
+kbd{font:inherit;font-size:11px;border:1px solid var(--alu);padding:0 5px;border-radius:2px;background:#fff}
+.calc{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;align-items:end}
+.big{font-size:28px;font-weight:500;font-variant-numeric:tabular-nums}
+.pill{display:inline-block;padding:2px 8px;border:1px solid var(--alu);border-radius:12px;font-size:12px;margin:2px 4px 2px 0;cursor:pointer}
+.pill.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+@media(max-width:700px){.wrap{padding:12px 12px 90px}.calc{grid-template-columns:1fr}.sheet{padding:16px}.mark{font-size:17px}}
+@media print{nav,form,.noprint,.kpis{display:none}.wrap{padding:0}.sheet{border:0;padding:0}}
+</style>
+</head>
+<body><div class="wrap">
+<div class="mark"><div><b>CORRIDOR</b><span>RECOVERY</span></div><small>Desk v0.2 · <span id="asof"></span> · <kbd>/</kbd> search · <kbd>n</kbd> new client · <kbd>1–7</kbd> tabs</small></div>
+<nav id="nav">
+<button class="on" data-t="dash">Dashboard</button>
+<button data-t="tasks">Tasks<span class="c" id="cTasks">0</span></button>
+<button data-t="clients">Clients<span class="c" id="cClients">0</span></button>
+<button data-t="entries">Entries<span class="c" id="cEntries">0</span></button>
+<button data-t="bucketb">Bucket B</button>
+<button data-t="findings">Findings</button>
+<button data-t="rules">Rules & feed</button>
+</nav>
+
+<section id="dash">
+<h1>Where the money and the clocks are</h1>
+<div class="kpis" id="kpis"></div>
+<div class="grid" style="grid-template-columns:1fr 1fr;gap:16px">
+<div><h2>Clocks — next 14 deadlines</h2><div id="clocks" class="panel"></div></div>
+<div><h2>Quick exposure calculator</h2><div class="panel">
+<div class="calc">
+<div><label>US sales Feb 2025–Feb 2026 (US$)</label><input id="qc_sales" type="number" value="2000000"></div>
+<div><label>Share not CUSMA-qualified</label><input id="qc_share" type="number" step="0.05" value="0.5"></div>
+<div><label>Blended rate paid</label><input id="qc_rate" type="number" step="0.05" value="0.30"></div>
+<div><div class="l muted small">Likely exposure</div><div class="big" id="qc_out"></div></div>
+</div>
+<p class="small muted" style="margin-top:8px">Use on the phone. Say "likely", never "you'll get". Fee at 10–22.5% shown when you generate a findings sheet.</p>
+</div></div>
+</div>
+<div class="note">Rule: no figure is quoted while any of a client's entries sits on an <span class="tag t-est">est.</span> liquidation date. The ACE date always wins. Non-IEEPA lines (232, 301, 338) are excluded automatically.</div>
+</section>
+
+<section id="tasks" hidden>
+<h1>Tasks — generated from the state of every file</h1>
+<p class="muted">Nothing here is typed in. Each task exists because the data says it should. Tick it when done; it disappears when the data no longer needs it.</p>
+<div class="row noprint"><span class="pill on" data-f="all">All</span><span class="pill" data-f="PK">PK</span><span class="pill" data-f="Desk">Desk</span><span class="pill" data-f="Broker">Partner broker</span><span class="pill" data-f="Client">Client</span></div>
+<div id="taskList" class="panel"></div>
+</section>
+
+<section id="clients" hidden>
+<h1>Clients</h1>
+<div class="row noprint"><input class="search" id="cSearch" placeholder="Search clients…"><button class="b s x" id="newClientBtn">+ New client</button><button class="b s x" id="exportJson">Backup (JSON)</button><label class="b s x" style="display:inline-block;width:auto;margin:0">Restore<input type="file" id="importJson" accept=".json" hidden></label></div>
+<form id="cf" hidden onsubmit="return false">
+<div class="grid">
+<div><label>Company</label><input name="company" required></div>
+<div><label>Bucket</label><select name="bucket"><option>A — exporter as IOR</option><option>B — exporter's US customer</option><option>C — Canadian importer (surtax)</option><option>D — origin certification</option></select></div>
+<div><label>Contact</label><input name="contact"></div>
+<div><label>Phone / email</label><input name="phone"></div>
+<div><label>Their customs broker</label><input name="broker"></div>
+<div><label>Stage</label><select name="stage"><option>Lead</option><option>Qualified</option><option>Engaged</option><option>Data in</option><option>Findings sent</option><option>Filed</option><option>Refunded</option><option>Closed</option></select></div>
+<div><label>US sales in window (US$)</label><input name="sales" type="number" min="0"></div>
+<div><label>Share NOT CUSMA-qualified</label><input name="share" type="number" step="0.05" min="0" max="1" value="0.5"></div>
+<div><label>Rate paid</label><input name="rate" type="number" step="0.05" value="0.35"></div>
+<div><label>ACE/ACH enrolled</label><select name="ach"><option>No</option><option>Yes</option><option>Unknown</option></select></div>
+<div><label>Engagement signed</label><input name="signed" type="date"></div>
+<div><label>Referred by (client)</label><input name="ref"></div>
+</div>
+<div><label>Notes</label><textarea name="notes" style="min-height:56px"></textarea></div>
+<div class="row"><button class="b" id="saveClient">Save client</button><button class="b s" id="cancelClient">Cancel</button></div>
+</form>
+<div class="tw" id="clientTable"></div>
+</section>
+
+<section id="entries" hidden>
+<h1>Entries</h1>
+<div class="row noprint"><div style="min-width:240px"><label>Assign to client</label><select id="entryClient"></select></div><input class="search" id="eSearch" placeholder="Filter entries…" style="align-self:flex-end"></div>
+<div class="drop" id="drop">Drop a broker entry report (.csv) here, or click to choose. Columns are auto-mapped: entry number, entry date, HTS, entered value, duty rate or duty amount, liquidation date, consignee/importer name. <input type="file" id="csvFile" accept=".csv,.txt" hidden></div>
+<details><summary class="small muted">Or paste rows: <code>entry#, entry date, HTS, entered value, rate, liquidation date, US consignee</code></summary>
+<form id="ef" onsubmit="return false"><textarea name="rows" placeholder="ABC-1234567-8, 2025-03-14, 9903.01.10, 180000, 0.25, 2026-01-22, Acme Distributors Inc&#10;ABC-1234568-9, 2025-09-03, 9903.01.10, 210000, 0.35, , Acme Distributors Inc"></textarea><div class="row"><button class="b" id="addEntries">Add rows</button><button class="b s" id="loadDemo">Load demo data</button><button class="b s" id="exportCsv">Export CSV</button><button class="b s" id="clearAll">Clear everything</button></div></form></details>
+<div id="mapPanel"></div>
+<div class="tw" id="entryTable"></div>
+</section>
+
+<section id="bucketb" hidden>
+<h1>Bucket B — the client's US customers</h1>
+<p class="muted">Built from the consignee names on a client's entries. Each US importer of record on this list paid the tariff itself and is a prospect on a warm introduction from our client.</p>
+<div class="row noprint"><div style="min-width:260px"><label>Client</label><select id="bbClient"></select></div><button class="b" id="bbGen">Build list</button><button class="b s" id="bbDraft">Draft intro email (AI)</button></div>
+<div id="bbOut"></div>
+</section>
+
+<section id="findings" hidden>
+<h1>Findings sheet</h1>
+<div class="row noprint"><div style="min-width:260px"><label>Client</label><select id="fsClient"></select></div><button class="b" id="genFs">Generate</button><button class="b s" onclick="window.print()">Print / PDF</button><button class="b s" id="draftAI">Cover note (AI)</button></div>
+<div id="fsOut"></div>
+</section>
+
+<section id="rules" hidden>
+<h1>Rules the engine runs on</h1>
+<div class="panel"><div class="grid">
+<div><label>Protest window (days)</label><input id="r_prot" type="number"></div>
+<div><label>Phase 1 window (days post-liq.)</label><input id="r_p1" type="number"></div>
+<div><label>Liquidation lag estimate (days)</label><input id="r_lag" type="number"></div>
+<div><label>Urgent threshold (days)</label><input id="r_urg" type="number"></div>
+<div><label>Fee — Phase 1</label><input id="r_fee1" type="number" step="0.01"></div>
+<div><label>Fee — protest/complex</label><input id="r_fee2" type="number" step="0.01"></div>
+<div><label>Broker share</label><input id="r_brok" type="number" step="0.01"></div>
+<div><label>Realization haircut</label><input id="r_real" type="number" step="0.05"></div>
+</div><button class="b" id="saveRules">Save rules</button>
+<p class="small muted" style="margin-top:8px">19 CFR 174.12 (180-day protest) · CBP CAPE guidance Apr 2026 (Phase 1 = unliquidated or ≤80 days post-liquidation) · CBP default liquidation ≈314 days · fees per CM-PB-2026-002 §6. IEEPA HTS lines recognised: 9903.01.xx. Excluded as non-refundable: 9903.80/81/85 (232 steel/alu), 9903.78 (232 copper), 9903.88–91 (301), 9903.94 (autos).</p></div>
+<h2>Read a bulletin — propose rule changes (AI)</h2>
+<div class="panel"><textarea id="bulletin" placeholder="Paste a CBP CSMS message, CBSA Customs Notice, or Federal Register notice…"></textarea><button class="b" id="readBulletin">Extract rule impacts</button><div id="bulletinOut"></div></div>
+<h2>Rule feed</h2>
+<ul class="feed small">
+<li><span class="d">2026-09-08</span>Canada: 15/25/50% surtaxes on C$27.6B of US goods; remission/drawback via existing 2025 order (CBSA CN 26-23).</li>
+<li><span class="d">2026-09-08</span>US: five Section 338 proclamations incl. import bans from Sept 29 — not IEEPA, not refundable.</li>
+<li><span class="d">2026-04-20</span>CBP opened CAPE in ACE. Phase 1 = unliquidated or ≤80 days post-liquidation. File = CSV of entry numbers.</li>
+<li><span class="d">2026-03-04</span>CIT ordered CBP to liquidate/reliquidate non-final entries without IEEPA duties; interest applies.</li>
+<li><span class="d">2026-02-24</span>IEEPA collection ended · <span class="d">2026-02-20</span>SCOTUS: IEEPA tariffs unlawful.</li>
+<li><span class="d">2025-02-04</span>IEEPA duties begin on non-CUSMA Canadian goods (25%; 35% from 2025-08-01).</li>
+</ul></div>
+</section>
+</div>
+
+<script>
+// ===== state =====
+const S={clients:[],entries:[],done:{},rules:{prot:180,p1:80,lag:314,urg:30,fee1:0.10,fee2:0.225,brok:0.25,real:0.8}};
+const KEY="corridor-recovery-v02";let editing=null,taskFilter="all",sortKey=null,sortDir=1;
+async function load(){try{const r=await window.storage.get(KEY);if(r&&r.value)Object.assign(S,JSON.parse(r.value));}catch(e){}render();}
+async function save(){try{await window.storage.set(KEY,JSON.stringify(S));}catch(e){console.error(e)}}
+const today=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
+const D=s=>{if(!s)return null;const t=String(s).trim();let d=new Date(t.length==10?t+"T00:00:00":t);if(isNaN(d)){const m=t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);if(m){d=new Date(+(m[3].length==2?"20"+m[3]:m[3]),+m[1]-1,+m[2]);}}return isNaN(d)?null:d};
+const fmt=d=>d?d.toISOString().slice(0,10):"";const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const money=n=>n==null?"—":"$"+Math.round(n).toLocaleString();const db=(a,b)=>Math.round((a-b)/86400000);
+const esc=s=>String(s??"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+document.getElementById("asof").textContent="as of "+fmt(today());
+
+// ===== classification =====
+function classify(hts){const h=String(hts||"").replace(/\./g,"");if(!h)return {kind:"unknown",label:"no HTS"};
+  if(h.startsWith("990301"))return {kind:"ieepa",label:"IEEPA"};
+  if(/^9903(80|81|85|78)/.test(h))return {kind:"s232",label:"232 — not refundable"};
+  if(/^9903(88|89|90|91)/.test(h))return {kind:"s301",label:"301 — not refundable"};
+  if(h.startsWith("990394"))return {kind:"autos",label:"232 autos — not refundable"};
+  if(h.startsWith("9903"))return {kind:"other99",label:"Ch.99 — check"};
+  return {kind:"base",label:"base line"};}
+
+// ===== engine =====
+function phase(e){const r=S.rules,t=today();const cls=classify(e.hts);
+  if(cls.kind!=="ieepa"&&cls.kind!=="unknown"&&cls.kind!=="other99")return {phase:"Not IEEPA",cls,deadline:null,days:null,est:false,duty:0,na:true};
+  const ent=D(e.entryDate),liq=D(e.liqDate);const est=!liq;const liqEff=liq||(ent?addDays(ent,r.lag):null);
+  const duty=e.duty!=null&&e.duty!==""?+e.duty:(+e.value||0)*(+e.rate||0);
+  if(!liqEff)return {phase:"—",cls,deadline:null,days:null,est,duty};
+  const since=db(t,liqEff);let ph,dead;
+  if(since<0){ph="Phase 1 — unliquidated";dead=addDays(liqEff,r.p1);}else if(since<=r.p1){ph="Phase 1 — recently liquidated";dead=addDays(liqEff,r.p1);}else if(since<=r.prot){ph="Protest required";dead=addDays(liqEff,r.prot);}else{ph="Deadline passed — litigation only";dead=addDays(liqEff,r.prot);}
+  return {phase:ph,cls,deadline:dead,days:db(dead,t),est,duty,liqEff};}
+const tagFor=p=>p.na?'<span class="tag t-na">'+esc(p.cls.label)+'</span>':p.phase.startsWith("Phase 1")?'<span class="tag t-p1">Phase 1</span>':p.phase.startsWith("Protest")?'<span class="tag t-pr">Protest</span>':p.phase.startsWith("Deadline")?'<span class="tag t-gone">Passed</span>':"";
+function clientStats(c){const es=S.entries.filter(e=>e.client===c.company).map(e=>({e,p:phase(e)}));const sum=f=>es.filter(f).reduce((a,x)=>a+x.p.duty,0);
+  const p1=sum(x=>x.p.phase.startsWith("Phase 1")),pr=sum(x=>x.p.phase.startsWith("Protest")),gone=sum(x=>x.p.phase.startsWith("Deadline")),na=es.filter(x=>x.p.na).length,est=es.filter(x=>x.p.est&&!x.p.na).length;
+  const live=es.filter(x=>x.p.days!=null&&x.p.days>=0&&!x.p.na).sort((a,b)=>a.p.days-b.p.days);const min=live.length?live[0].p.days:null;const past=es.filter(x=>x.p.days!=null&&x.p.days<0).length;
+  const exposure=(+c.sales||0)*(+c.share||0)*(+c.rate||0);const fee=p1*S.rules.fee1+pr*S.rules.fee2;
+  const consignees=[...new Set(es.map(x=>x.e.consignee).filter(Boolean))];
+  return {es,p1,pr,gone,na,est,min,past,exposure,fee,total:p1+pr+gone,next:live[0]||null,consignees};}
+
+// ===== tasks (generated) =====
+function tasks(){const r=S.rules,out=[];
+  S.clients.forEach(c=>{const st=clientStats(c);const id=s=>c.company+"|"+s;
+    if(c.stage==="Lead")out.push({id:id("qualify"),who:"PK",t:`Qualify ${c.company} — five questions, log answers`,c});
+    if(c.stage==="Qualified"&&!c.signed)out.push({id:id("engage"),who:"PK",t:`Send engagement letter + authorization to ${c.company}`,c});
+    if(["Engaged"].includes(c.stage)&&st.es.length===0)out.push({id:id("data"),who:"Client",t:`${c.company}: broker entry report not received — chase ${c.broker||"their broker"}`,c});
+    if(st.est>0)out.push({id:id("ace"),who:"Broker",t:`${c.company}: pull ACE liquidation dates for ${st.est} estimated entries`,c,hot:true});
+    if(st.es.length>0&&c.ach!=="Yes")out.push({id:id("ach"),who:"Client",t:`${c.company}: ACE portal + ACH refund enrolment not confirmed — walk them through it`,c});
+    if(st.es.length>0&&["Data in","Engaged"].includes(c.stage)&&st.est===0)out.push({id:id("fs"),who:"Desk",t:`${c.company}: entries complete — generate findings sheet (${money(st.total)} IEEPA)`,c});
+    if(st.p1>0&&["Findings sent"].includes(c.stage))out.push({id:id("cape"),who:"Broker",t:`${c.company}: file CAPE declaration for Phase 1 entries (${money(st.p1)})`,c});
+    st.es.filter(x=>x.p.phase==="Protest required"&&x.p.days>=0).sort((a,b)=>a.p.days-b.p.days).slice(0,3).forEach(x=>out.push({id:id("prot|"+x.e.entry),who:"Broker",t:`${c.company}: protest entry ${x.e.entry} by ${fmt(x.p.deadline)} (${x.p.days}d, ${money(x.p.duty)})`,c,hot:x.p.days<r.urg}));
+    if(st.past>0)out.push({id:id("past"),who:"Desk",t:`${c.company}: ${st.past} entries past protest deadline (${money(st.gone)}) — flag to counsel, do not promise`,c});
+    if(c.bucket.startsWith("A")&&["Findings sent","Filed","Refunded"].includes(c.stage))out.push({id:id("bb"),who:"PK",t:`${c.company}: ask for US customer introductions (${st.consignees.length} consignees already on file)`,c});
+    if(c.stage==="Refunded")out.push({id:id("inv"),who:"Desk",t:`${c.company}: refund landed — invoice fee (${money(st.fee)} indicative)`,c});
+  });
+  return out.map(t=>({...t,done:!!S.done[t.id]}));}
+
+// ===== render =====
+function render(){renderDash();renderTasks();renderClients();renderEntries();fillSelects();fillRules();qc();
+  document.getElementById("cClients").textContent=S.clients.length;document.getElementById("cEntries").textContent=S.entries.length;
+  const open=tasks().filter(t=>!t.done);const hot=open.filter(t=>t.hot).length;const cT=document.getElementById("cTasks");cT.textContent=open.length;cT.className="c"+(hot?" hot":"");}
+function renderDash(){const r=S.rules;let duty=0,p1=0,pr=0,gone=0,urg=0,past=0,est=0,na=0;
+  S.entries.forEach(e=>{const p=phase(e);if(p.na){na++;return;}duty+=p.duty;if(p.phase.startsWith("Phase 1"))p1+=p.duty;else if(p.phase.startsWith("Protest"))pr+=p.duty;else if(p.phase.startsWith("Deadline"))gone+=p.duty;if(p.days!=null){if(p.days<0)past++;else if(p.days<r.urg)urg++;}if(p.est)est++;});
+  const gross=(p1*r.fee1+pr*r.fee2)*r.real,net=gross*(1-r.brok);const exposure=S.clients.reduce((a,c)=>a+clientStats(c).exposure,0);
+  const k=[["Clients",S.clients.length],["Est. exposure",money(exposure)],["IEEPA duty logged",money(duty)],["Phase 1 — filable now",money(p1),"good"],["Protest required",money(pr),pr?"warn":""],["Past deadline",money(gone),gone?"bad":""],["Urgent entries",urg,urg?"warn":""],["Past deadline (#)",past,past?"bad":""],["Estimated liq. dates",est,est?"warn":""],["Non-IEEPA lines excluded",na],["Expected gross fee",money(gross)],["Expected net fee",money(net),"good"]];
+  document.getElementById("kpis").innerHTML=k.map(([l,v,c])=>`<div class="kpi ${c||""}"><div class="l">${l}</div><div class="v">${v}</div></div>`).join("");
+  const up=S.entries.map(e=>({e,p:phase(e)})).filter(x=>x.p.days!=null&&x.p.days>=0&&!x.p.na).sort((a,b)=>a.p.days-b.p.days).slice(0,14);
+  const maxd=Math.max(30,...up.map(x=>x.p.days));
+  document.getElementById("clocks").innerHTML=up.length?`<div class="tl">${up.map(({e,p})=>`<div class="mono">${p.days}d · ${fmt(p.deadline)}</div><div><div class="bar" title="${esc(e.client)}"><i style="left:0;width:${Math.max(2,100*p.days/maxd)}%;background:${p.days<r.urg?"var(--red)":p.phase.startsWith("Protest")?"var(--amber)":"var(--verd)"}"></i></div><div class="small muted">${esc(e.client)} · ${esc(e.entry)} · ${money(p.duty)} ${p.est?'<span class="tag t-est">est.</span>':""}</div></div>`).join("")}</div>`:`<p class="muted">No live deadlines. Load demo data on the Entries tab to see the engine.</p>`;}
+function renderTasks(){const list=tasks().filter(t=>taskFilter==="all"||t.who===taskFilter);
+  document.getElementById("taskList").innerHTML=list.length?list.map(t=>`<div class="task ${t.done?"done":""}"><input type="checkbox" data-task="${esc(t.id)}" ${t.done?"checked":""}><div><div>${t.hot?'<span class="tag t-gone">urgent</span>':""}${esc(t.t)}</div><div class="who">${t.who}</div></div></div>`).join(""):`<p class="muted">No tasks — nothing in the data needs doing.</p>`;
+  document.querySelectorAll("[data-task]").forEach(cb=>cb.onchange=async()=>{S.done[cb.dataset.task]=cb.checked;await save();render();});}
+function renderClients(){const q=(document.getElementById("cSearch").value||"").toLowerCase();
+  const rows=S.clients.map((c,i)=>({c,i,st:clientStats(c)})).filter(x=>!q||JSON.stringify(x.c).toLowerCase().includes(q)).map(({c,i,st})=>`<tr class="${st.min!=null&&st.min<S.rules.urg?"urgent":""}"><td><strong>${esc(c.company)}</strong><div class="small muted">${esc(c.contact||"")} ${esc(c.phone||"")}${c.ref?" · via "+esc(c.ref):""}</div></td><td>${esc(c.bucket.split(" ")[0])}</td><td><select data-stage="${i}" style="padding:3px 4px;font-size:12px">${["Lead","Qualified","Engaged","Data in","Findings sent","Filed","Refunded","Closed"].map(s=>`<option ${s===c.stage?"selected":""}>${s}</option>`).join("")}</select></td><td>${esc(c.broker||"")}</td><td>${c.ach}</td><td class="n">${money(st.exposure)}</td><td class="n">${st.es.length}${st.est?` <span class="tag t-est">${st.est} est.</span>`:""}</td><td class="n">${money(st.total)}</td><td class="n">${money(st.fee)}</td><td class="n">${st.min==null?"—":st.min}</td><td><button class="b s x" data-edit="${i}">edit</button> <button class="b s x" data-del="${i}">remove</button></td></tr>`).join("");
+  document.getElementById("clientTable").innerHTML=S.clients.length?`<table><tr><th>Company</th><th>Bucket</th><th>Stage</th><th>Broker</th><th>ACE/ACH</th><th class="n">Est. exposure</th><th class="n">Entries</th><th class="n">IEEPA duty</th><th class="n">Fee if recovered</th><th class="n">Next clock (d)</th><th></th></tr>${rows}</table>`:`<p class="muted" style="padding:14px">No clients yet. Press <kbd>n</kbd> or load demo data on the Entries tab.</p>`;
+  document.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{if(!confirm("Remove "+S.clients[+b.dataset.del].company+"?"))return;S.clients.splice(+b.dataset.del,1);await save();render();});
+  document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openClient(+b.dataset.edit));
+  document.querySelectorAll("[data-stage]").forEach(s=>s.onchange=async()=>{S.clients[+s.dataset.stage].stage=s.value;await save();render();});}
+function renderEntries(){const q=(document.getElementById("eSearch").value||"").toLowerCase();let list=S.entries.map((e,i)=>({e,i,p:phase(e)})).filter(x=>!q||JSON.stringify(x.e).toLowerCase().includes(q));
+  if(sortKey)list.sort((a,b)=>{const va=sortKey==="days"?(a.p.days??1e9):sortKey==="duty"?a.p.duty:(a.e[sortKey]||"");const vb=sortKey==="days"?(b.p.days??1e9):sortKey==="duty"?b.p.duty:(b.e[sortKey]||"");return (va>vb?1:va<vb?-1:0)*sortDir;});
+  const rows=list.map(({e,i,p})=>`<tr class="${p.na?"na":p.days!=null&&p.days<0?"gone":p.days!=null&&p.days<S.rules.urg?"urgent":""}"><td>${esc(e.entry)}</td><td>${esc(e.client)}</td><td>${esc(e.entryDate)}</td><td>${esc(e.hts||"")}</td><td class="n">${money(+e.value)}</td><td class="n">${e.rate?Math.round(e.rate*100)+"%":""}</td><td>${esc(e.liqDate||(p.liqEff?fmt(p.liqEff):""))} ${p.est&&!p.na?'<span class="tag t-est">est.</span>':""}</td><td class="n">${p.na?"—":money(p.duty)}</td><td>${tagFor(p)}</td><td>${fmt(p.deadline)}</td><td class="n">${p.days==null?"—":p.days}</td><td class="small">${esc(e.consignee||"")}</td><td><button class="b s x" data-edel="${i}">x</button></td></tr>`).join("");
+  const th=(l,k,n)=>`<th class="${n?"n":""}" data-sort="${k}">${l}${sortKey===k?(sortDir>0?" ▲":" ▼"):""}</th>`;
+  document.getElementById("entryTable").innerHTML=S.entries.length?`<table><tr>${th("Entry #","entry")}${th("Client","client")}${th("Entry date","entryDate")}${th("HTS","hts")}${th("Value","value",1)}<th class="n">Rate</th><th>Liquidation</th>${th("IEEPA duty","duty",1)}<th>Phase</th><th>Deadline</th>${th("Days","days",1)}<th>US consignee</th><th></th></tr>${rows}</table>`:`<p class="muted" style="padding:14px">No entries yet.</p>`;
+  document.querySelectorAll("[data-edel]").forEach(b=>b.onclick=async()=>{S.entries.splice(+b.dataset.edel,1);await save();render();});
+  document.querySelectorAll("[data-sort]").forEach(h=>h.onclick=()=>{if(sortKey===h.dataset.sort)sortDir*=-1;else{sortKey=h.dataset.sort;sortDir=1;}renderEntries();});}
+function fillSelects(){const o=S.clients.map(c=>`<option>${esc(c.company)}</option>`).join("");["entryClient","fsClient","bbClient"].forEach(id=>{const el=document.getElementById(id);const v=el.value;el.innerHTML=o;if(v)el.value=v;});}
+function fillRules(){for(const k in S.rules){const el=document.getElementById("r_"+k);if(el)el.value=S.rules[k];}}
+function qc(){const v=(+document.getElementById("qc_sales").value||0)*(+document.getElementById("qc_share").value||0)*(+document.getElementById("qc_rate").value||0);document.getElementById("qc_out").textContent=money(v);}
+["qc_sales","qc_share","qc_rate"].forEach(id=>document.getElementById(id).oninput=qc);
+
+// ===== CSV ingestion with auto-mapping =====
+const ALIASES={entry:["entry number","entry no","entry #","entry_no","entrynumber","entry"],entryDate:["entry date","entry_date","date of entry","entry summary date","import date"],hts:["hts","htsus","tariff","hts number","hts no","classification"],value:["entered value","value","entered_value","customs value","total entered value"],rate:["rate","duty rate","ad valorem"],duty:["duty","duties paid","ieepa duty","duty amount","total duty","duties"],liqDate:["liquidation date","liq date","liquidated","liquidation"],consignee:["consignee","importer","importer name","ultimate consignee","consignee name","ior name"]};
+function autoMap(headers){const m={};headers.forEach((h,i)=>{const l=h.toLowerCase().trim();for(const k in ALIASES){if(m[k]==null&&ALIASES[k].some(a=>l===a||l.includes(a)))m[k]=i;}});return m;}
+function ingestRows(rows,map,client){let n=0,skipped=0;rows.forEach(r=>{const g=k=>map[k]!=null?String(r[map[k]]??"").trim():"";const entry=g("entry");if(!entry)return;const num=s=>+String(s).replace(/[^0-9.\-]/g,"")||0;
+  let rate=num(g("rate"));if(rate>1)rate=rate/100;const val=num(g("value")),duty=g("duty")?num(g("duty")):null;if(!rate&&duty&&val)rate=duty/val;
+  S.entries.push({entry,client,entryDate:fmt(D(g("entryDate")))||g("entryDate"),hts:g("hts"),value:val,rate:rate||"",duty:duty,liqDate:fmt(D(g("liqDate"))),consignee:g("consignee")});n++;});return n;}
+function handleCsvText(text){const client=document.getElementById("entryClient").value;if(!client){alert("Add a client first, then import.");return;}
+  const res=Papa.parse(text,{skipEmptyLines:true});const rows=res.data;if(rows.length<2){alert("No rows found.");return;}const headers=rows[0];const map=autoMap(headers);
+  const mp=document.getElementById("mapPanel");mp.innerHTML=`<div class="panel"><h3>Column mapping — ${rows.length-1} rows for ${esc(client)}</h3><div class="grid">${Object.keys(ALIASES).map(k=>`<div><label>${k}</label><select data-map="${k}"><option value="">— not present —</option>${headers.map((h,i)=>`<option value="${i}" ${map[k]===i?"selected":""}>${esc(h)}</option>`).join("")}</select></div>`).join("")}</div><div class="row"><button class="b" id="doImport">Import</button><button class="b s" id="cancelImport">Cancel</button></div><p class="small muted">Rows without an HTS line are treated as possibly IEEPA; rows with 232/301/autos lines are excluded from refund totals automatically.</p></div>`;
+  document.getElementById("doImport").onclick=async()=>{const m={};document.querySelectorAll("[data-map]").forEach(s=>{if(s.value!=="")m[s.dataset.map]=+s.value;});const n=ingestRows(rows.slice(1),m,client);mp.innerHTML=`<p class="muted">Imported ${n} entries for ${esc(client)}.</p>`;await save();render();};
+  document.getElementById("cancelImport").onclick=()=>mp.innerHTML="";}
+const drop=document.getElementById("drop"),csvFile=document.getElementById("csvFile");
+drop.onclick=()=>csvFile.click();csvFile.onchange=()=>{const f=csvFile.files[0];if(f)f.text().then(handleCsvText);csvFile.value="";};
+["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("over");}));["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("over");}));
+drop.addEventListener("drop",e=>{const f=e.dataTransfer.files[0];if(f)f.text().then(handleCsvText);});
+document.getElementById("addEntries").onclick=async()=>{const f=document.getElementById("ef");const client=document.getElementById("entryClient").value;if(!client){alert("Add a client first.");return;}let n=0;
+  f.rows.value.split("\n").map(l=>l.trim()).filter(Boolean).forEach(l=>{const p=l.split(",").map(s=>s.trim());if(p.length<4)return;S.entries.push({entry:p[0],client,entryDate:p[1],hts:p[2],value:+p[3],rate:+p[4]||"",liqDate:p[5]||"",consignee:p[6]||""});n++;});f.rows.value="";await save();render();};
+document.getElementById("exportCsv").onclick=()=>{const rows=[["entry","client","entryDate","hts","value","rate","liqDate","consignee","ieepaDuty","phase","deadline","daysRemaining","estimated"]].concat(S.entries.map(e=>{const p=phase(e);return [e.entry,e.client,e.entryDate,e.hts||"",e.value,e.rate,e.liqDate||"",e.consignee||"",p.na?"":Math.round(p.duty),p.phase,fmt(p.deadline),p.days??"",p.est?"Y":"N"];}));
+  const blob=new Blob([Papa.unparse(rows)],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="corridor-entries-"+fmt(today())+".csv";a.click();};
+
+// ===== Bucket B =====
+function bucketB(name){const c=S.clients.find(x=>x.company===name);if(!c)return "";const st=clientStats(c);const map={};
+  st.es.forEach(({e,p})=>{const k=(e.consignee||"").trim();if(!k)return;map[k]=map[k]||{n:0,duty:0,val:0,first:null,last:null};map[k].n++;map[k].duty+=p.na?0:p.duty;map[k].val+=+e.value||0;const d=D(e.entryDate);if(d){if(!map[k].first||d<map[k].first)map[k].first=d;if(!map[k].last||d>map[k].last)map[k].last=d;}});
+  const list=Object.entries(map).sort((a,b)=>b[1].duty-a[1].duty);
+  return list.length?`<div class="tw"><table><tr><th>US consignee</th><th class="n">Entries</th><th class="n">Entered value</th><th class="n">IEEPA duty on this client's goods</th><th>Window</th><th>Status</th></tr>${list.map(([k,v])=>`<tr><td><strong>${esc(k)}</strong></td><td class="n">${v.n}</td><td class="n">${money(v.val)}</td><td class="n">${money(v.duty)}</td><td>${fmt(v.first)} → ${fmt(v.last)}</td><td>${S.clients.some(x=>x.company===k)?'<span class="tag t-b">already a client</span>':`<button class="b s x" data-bb="${esc(k)}" data-ref="${esc(name)}">add as B prospect</button>`}</td></tr>`).join("")}</table></div><p class="small muted" style="margin-top:8px">If the consignee is the client itself, they were IOR (bucket A) and this list is empty — that's expected. Duty shown is what this client's goods carried; the consignee's total exposure across all suppliers is larger.</p>`:`<p class="muted">No consignee names on this client's entries yet. Ask the broker report to include the consignee / importer name column.</p>`;}
+document.getElementById("bbGen").onclick=()=>{document.getElementById("bbOut").innerHTML=bucketB(document.getElementById("bbClient").value);document.querySelectorAll("[data-bb]").forEach(b=>b.onclick=async()=>{S.clients.push({company:b.dataset.bb,bucket:"B — exporter's US customer",contact:"",phone:"",broker:"",stage:"Lead",sales:"",share:"",rate:"",ach:"Unknown",ref:b.dataset.ref,notes:"Bucket B prospect from "+b.dataset.ref});await save();render();document.getElementById("bbGen").click();});};
+document.getElementById("bbDraft").onclick=()=>aiInto("bbOut",`You are the desk at Corridor Recovery. Write a 110-word email that our Canadian client ${document.getElementById("bbClient").value} can forward to one of its US customers, explaining that the customer likely paid refundable IEEPA tariffs on the client's goods in 2025, that refunds are being paid with interest through CBP's CAPE portal, that deadlines apply, and offering an introduction to Corridor Recovery (contingency fee, licensed partner broker files). Warm, plain, no guarantees, no hype words, ends with one clear ask. Sign as the client.`,true);
+
+// ===== findings sheet =====
+function findings(name){const c=S.clients.find(x=>x.company===name);if(!c)return "";const st=clientStats(c),r=S.rules;const ref="CM-FS-"+today().getFullYear()+"-"+String(S.clients.indexOf(c)+1).padStart(3,"0");
+  return `<div class="sheet"><div class="mark"><div><b>CORRIDOR</b><span>RECOVERY</span></div></div><div class="docline"><div><strong>Findings sheet</strong> ${ref}</div><div>To: ${esc(c.contact||"—")}, ${esc(c.company)}</div><div>As of ${fmt(today())}</div></div>
+  <h1>What the entries show</h1><p>We reviewed ${st.es.length} US customs entries for ${esc(c.company)} from your broker's report${st.na?` (${st.na} carried non-IEEPA duty lines and are excluded — those duties are not refundable under the ruling)`:""}${st.est?`; ${st.est} entries are on an estimated liquidation date and the figures below will change when ACE dates are confirmed`:""}. IEEPA duty identified: <strong>${money(st.total)}</strong>.</p>
+  <div class="tw"><table><tr><th>Category</th><th class="n">IEEPA duty</th><th>What it means</th><th>Action</th></tr>
+  <tr><td>Filable now in CAPE (Phase 1)</td><td class="n">${money(st.p1)}</td><td>Unliquidated, or liquidated within ${r.p1} days</td><td>Partner broker files the declaration. ACE/ACH enrolment: ${esc(c.ach)}</td></tr>
+  <tr><td>Protest required</td><td class="n">${money(st.pr)}</td><td>Liquidated more than ${r.p1} days ago; ${r.prot}-day window open</td><td>Protest per entry${st.next&&st.next.p.phase.startsWith("Protest")?` — next deadline ${fmt(st.next.p.deadline)} (${st.next.p.days} days)`:""}</td></tr>
+  <tr><td>Deadline passed</td><td class="n">${money(st.gone)}</td><td>Protest window closed</td><td>Assessed with counsel; litigation only</td></tr>
+  <tr><td style="border:0"></td><td class="n" style="border-top:2px solid var(--ink);border-bottom:0">${money(st.total)}</td><td style="border:0"></td><td style="border:0"></td></tr></table></div>
+  <h2>Our fee if recovered</h2><p>${Math.round(r.fee1*100)}% of Phase 1 refunds and ${Math.round(r.fee2*1000)/10}% of protest recoveries, payable only when funds arrive. Indicative fee on full recovery: <strong>${money(st.fee)}</strong>. CBP pays refunds with interest; its stated timeline of 60–90 days after acceptance should be treated as quarters, not weeks.</p>
+  <h2>What we need next</h2><p>1. Confirmed ACE portal access and ACH refund enrolment. ${st.est?`2. ACE liquidation dates for ${st.est} entries. 3. `:"2. "}Your signature on the partner broker's filing authorization.${c.bucket.startsWith("A")?` ${st.est?"4":"3"}. Introductions to your US customers who cleared your goods themselves${st.consignees.length?` — we count ${st.consignees.length} on your entries`:""}; they are likely owed refunds too.`:""}</p>
+  <div id="fsNarrative"></div><p class="small muted">This sheet reports what the customs entries show and the rules as published. It is not legal advice and not a guarantee of recovery. Estimated figures are marked and will be revised.</p>
+  <div class="foot"><div>Corridor Recovery, a trade name of [1234567 B.C. Ltd.]</div><div>Figures are dated; estimated figures are marked.</div></div></div>`;}
+document.getElementById("genFs").onclick=()=>{document.getElementById("fsOut").innerHTML=findings(document.getElementById("fsClient").value);};
+document.getElementById("draftAI").onclick=()=>{const name=document.getElementById("fsClient").value;const c=S.clients.find(x=>x.company===name);if(!c)return;if(!document.getElementById("fsNarrative"))document.getElementById("fsOut").innerHTML=findings(name);const st=clientStats(c);
+  aiInto("fsNarrative",`You are the desk at Corridor Recovery, a Canadian tariff-recovery firm. Write a 120-word plain-English cover note for the findings sheet. Lead with the number and the next action. No guarantees, no legal advice, no exclamation marks, no words like "leverage" or "trusted". End with one clear ask. Client: ${JSON.stringify({company:c.company,contact:c.contact,bucket:c.bucket,ach:c.ach})}. Totals: ${JSON.stringify({phase1:Math.round(st.p1),protest:Math.round(st.pr),passed:Math.round(st.gone),estimatedEntries:st.est,nextDeadline:st.next?fmt(st.next.p.deadline):null})}. Fees: Phase 1 ${S.rules.fee1*100}%, protest ${S.rules.fee2*100}%, contingent.`);};
+
+// ===== AI helper =====
+async function aiInto(id,prompt,append){const box=document.getElementById(id);const hold=append?box.innerHTML:"";box.innerHTML=hold+'<p class="muted">Drafting…</p>';
+  try{const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:prompt}]})});const d=await r.json();const t=(d.content||[]).filter(x=>x.type==="text").map(x=>x.text).join("\n");box.innerHTML=hold+`<div class="panel"><h3>Draft</h3><p style="white-space:pre-wrap;max-width:none">${esc(t)}</p></div>`;}catch(e){box.innerHTML=hold+'<p class="muted">Desk unavailable — draft by hand.</p>';}}
+document.getElementById("readBulletin").onclick=()=>{const t=document.getElementById("bulletin").value.trim();if(!t)return;aiInto("bulletinOut",`You are the rules desk at a tariff-recovery firm. Read this customs bulletin and respond ONLY with a JSON object (no prose, no markdown fences): {"summary":"two sentences","affects":["IEEPA refunds"|"Canadian surtax"|"CUSMA origin"|"other"],"proposed_rule_changes":[{"rule":"protest window|phase1 window|liquidation lag|fee|other","current":"...","proposed":"...","effective":"date or null","confidence":"high|medium|low"}],"client_actions":["..."],"deadline_dates":["yyyy-mm-dd"]}. Bulletin: ${t.slice(0,6000)}`);};
+
+// ===== client form =====
+function openClient(i){editing=i;const f=document.getElementById("cf");f.hidden=false;f.reset();if(i!=null){const c=S.clients[i];for(const k in c){if(f[k])f[k].value=c[k];}}f.company.focus();window.scrollTo({top:f.offsetTop-80});}
+document.getElementById("newClientBtn").onclick=()=>openClient(null);document.getElementById("cancelClient").onclick=()=>{document.getElementById("cf").hidden=true;editing=null;};
+document.getElementById("saveClient").onclick=async()=>{const f=document.getElementById("cf");const o={};new FormData(f).forEach((v,k)=>o[k]=v);if(!o.company)return;
+  if(editing!=null){const old=S.clients[editing].company;S.clients[editing]=o;if(old!==o.company)S.entries.forEach(e=>{if(e.client===old)e.client=o.company;});}else S.clients.push(o);f.hidden=true;editing=null;await save();render();};
+document.getElementById("cSearch").oninput=renderClients;document.getElementById("eSearch").oninput=renderEntries;
+document.querySelectorAll(".pill").forEach(p=>p.onclick=()=>{document.querySelectorAll(".pill").forEach(x=>x.classList.remove("on"));p.classList.add("on");taskFilter=p.dataset.f;renderTasks();});
+document.getElementById("saveRules").onclick=async()=>{for(const k in S.rules){const el=document.getElementById("r_"+k);if(el)S.rules[k]=+el.value;}await save();render();};
+document.getElementById("exportJson").onclick=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:"application/json"}));a.download="corridor-recovery-backup-"+fmt(today())+".json";a.click();};
+document.getElementById("importJson").onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(async t=>{try{Object.assign(S,JSON.parse(t));await save();render();}catch(err){alert("Not a valid backup.");}});};
+document.getElementById("loadDemo").onclick=async()=>{const c="Example Furniture Ltd";if(!S.clients.some(x=>x.company===c))S.clients.push({company:c,bucket:"A — exporter as IOR",contact:"Jane Doe",phone:"604-000-0000",broker:"Livingston",stage:"Data in",sales:2400000,share:0.6,rate:0.35,ach:"No",signed:"2026-10-02",notes:"Trial client (demo)"});
+  const c2="Example Foods Inc";if(!S.clients.some(x=>x.company===c2))S.clients.push({company:c2,bucket:"A — exporter as IOR",contact:"Raj Patel",phone:"604-000-0001",broker:"PCB",stage:"Engaged",sales:5000000,share:0.4,rate:0.30,ach:"Unknown",signed:"2026-10-05",notes:"Ships to 6 US distributors (demo)"});
+  const add=(client,rows)=>rows.forEach(r=>S.entries.push({client,entry:r[0],entryDate:r[1],hts:r[2],value:r[3],rate:r[4],liqDate:r[5],consignee:r[6]}));
+  add(c,[["ABC-1234567-8","2025-03-14","9903.01.10",180000,0.25,"2026-01-22","Acme Distributors Inc"],["ABC-1234568-9","2025-09-03","9903.01.10",210000,0.35,"","Acme Distributors Inc"],["ABC-1234569-0","2026-01-20","9903.01.10",95000,0.35,"","Northwest Home Co"],["ABC-1234570-1","2025-06-10","9903.01.10",150000,0.25,"2026-04-20","Northwest Home Co"],["ABC-1234571-2","2025-06-11","9903.81.90",60000,0.50,"2026-04-21","Acme Distributors Inc"],["ABC-1234572-3","2025-11-05","9903.01.10",120000,0.35,"2026-08-30","Great Lakes Furnishings"]]);
+  add(c2,[["XYZ-2200001-1","2025-04-02","9903.01.10",300000,0.25,"2026-02-10","Pacific Grocers LLC"],["XYZ-2200002-2","2025-05-15","9903.01.10",260000,0.25,"2026-03-25","Pacific Grocers LLC"],["XYZ-2200003-3","2025-10-20","9903.01.10",280000,0.35,"","Cascade Foods Inc"],["XYZ-2200004-4","2026-02-10","9903.01.10",140000,0.35,"","Cascade Foods Inc"]]);
+  await save();render();};
+document.getElementById("clearAll").onclick=async()=>{if(!confirm("Delete all clients, entries and task history?"))return;S.clients=[];S.entries=[];S.done={};await save();render();};
+// tabs + keys
+const tabs=[...document.querySelectorAll("#nav button")];function go(b){tabs.forEach(x=>x.classList.remove("on"));b.classList.add("on");document.querySelectorAll("section").forEach(s=>s.hidden=s.id!==b.dataset.t);}
+tabs.forEach(b=>b.onclick=()=>go(b));
+document.addEventListener("keydown",e=>{if(["INPUT","TEXTAREA","SELECT"].includes(document.activeElement.tagName))return;if(e.key==="/"){e.preventDefault();go(tabs[2]);document.getElementById("cSearch").focus();}else if(e.key==="n"){go(tabs[2]);openClient(null);}else if(/^[1-7]$/.test(e.key)){go(tabs[+e.key-1]);}});
+load();
+</script>
+</body></html>
