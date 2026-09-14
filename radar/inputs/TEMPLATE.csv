@@ -1,0 +1,2 @@
+company,city,province,sector,website,contact,phone,notes
+Example Widgets Ltd,Kelowna,BC,machinery,https://example-widgets.invalid,Jane Example,000-000-0000,"Fake row for format only; delete before use. Sector is one of: furniture, food, beverage, packaging, machinery, plastics, building products, apparel, sporting goods, electrical, paper, chemicals, other."
