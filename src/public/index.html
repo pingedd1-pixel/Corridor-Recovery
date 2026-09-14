@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Corridor Recovery Desk</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#172033;--paper:#FBFBF9;--alu:#C9CED3;--alu2:#EEF0F1;--copper:#9C4A1A;--verd:#2F6F62;--amber:#8A6A12;--slate:#5B6672;--red:#9C2A2A}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"IBM Plex Sans",Arial,sans-serif;font-size:14px;line-height:1.45}
+.wrap{max-width:1240px;margin:0 auto;padding:18px 22px 90px}
+.mark{position:relative;padding:12px 0 12px 26px;border-top:3px solid var(--ink);border-bottom:3px solid var(--ink);font-size:20px;letter-spacing:.06em;line-height:1;display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.mark::before{content:"";position:absolute;left:0;top:50%;width:10px;height:10px;transform:translateY(-50%);background:var(--copper)}
+.mark b{font-weight:600}.mark span{font-weight:300;margin-left:.4em}.mark small{font-size:12px;letter-spacing:0;color:var(--slate);font-weight:400}
+nav{display:flex;gap:2px;margin:12px 0 18px;border-bottom:1px solid var(--alu);overflow-x:auto}
+nav button{background:none;border:0;border-bottom:2px solid transparent;padding:10px 12px;font:inherit;font-weight:500;color:var(--slate);cursor:pointer;white-space:nowrap}
+nav button.on{color:var(--ink);border-bottom-color:var(--copper)}
+nav button .c{display:inline-block;min-width:18px;padding:1px 5px;border-radius:9px;background:var(--alu2);color:var(--ink);font-size:11px;margin-left:5px}
+nav button .c.hot{background:var(--red);color:#fff}
+h1{font-size:21px;font-weight:500;margin:0 0 6px}h2{font-size:15px;font-weight:600;margin:20px 0 8px}h3{font-size:14px;font-weight:600;margin:14px 0 6px}
+p{max-width:72ch;margin:0 0 10px}.muted{color:var(--slate)}.small{font-size:12px}.mono{font-variant-numeric:tabular-nums}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0 16px}
+.kpi{border:1px solid var(--alu);background:#fff;padding:10px 12px;cursor:default}.kpi .l{font-size:11px;color:var(--slate)}.kpi .v{font-size:20px;font-weight:500;font-variant-numeric:tabular-nums;margin-top:3px}
+.kpi.warn .v{color:var(--amber)}.kpi.bad .v{color:var(--red)}.kpi.good .v{color:var(--verd)}
+.tw{overflow-x:auto;background:#fff;border:1px solid var(--alu)}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:640px}
+th{text-align:left;font-weight:500;color:var(--slate);border-bottom:2px solid var(--ink);padding:8px 8px;white-space:nowrap;cursor:pointer;user-select:none;position:sticky;top:0;background:#fff}
+th.n,td.n{text-align:right;font-variant-numeric:tabular-nums}
+td{border-bottom:1px solid var(--alu);padding:7px 8px;vertical-align:top}
+tr:hover td{background:#F6F7F5}
+tr.urgent td{background:#FBEAE5}tr.gone td{color:var(--red)}tr.na td{color:var(--slate)}
+.tag{display:inline-block;font-size:11px;font-weight:500;padding:2px 6px;border-radius:2px;color:#fff;white-space:nowrap;margin-right:3px}
+.t-p1{background:var(--verd)}.t-pr{background:var(--amber)}.t-gone{background:var(--red)}.t-est{background:var(--slate)}.t-na{background:#8A8F96}.t-b{background:var(--ink)}
+.panel,form{border:1px solid var(--alu);background:#fff;padding:14px 16px;margin:8px 0 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px 14px}
+label{display:block;font-size:12px;color:var(--slate);margin-bottom:3px}
+input,select,textarea{width:100%;font:inherit;font-size:13px;padding:7px 8px;border:1px solid var(--alu);background:#fff;color:var(--ink)}
+textarea{min-height:100px}
+.b{background:var(--ink);color:#fff;border:0;padding:8px 13px;font:inherit;font-weight:500;cursor:pointer;margin-top:8px;border-radius:2px}
+.b.s{background:#fff;color:var(--ink);border:1px solid var(--ink)}.b.x{padding:3px 8px;margin:0;font-size:12px}.b:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.note{border-left:3px solid var(--copper);padding:6px 12px;background:var(--alu2);margin:10px 0;font-size:13px;max-width:none}
+.drop{border:2px dashed var(--alu);padding:22px;text-align:center;color:var(--slate);background:#fff;margin:8px 0}
+.drop.over{border-color:var(--copper);color:var(--ink)}
+.sheet{background:#fff;border:1px solid var(--alu);padding:28px 32px;margin-top:12px}.sheet .mark{font-size:17px}
+.docline{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--slate);padding:8px 0 14px}.docline strong{color:var(--ink);font-weight:500}
+.sheet h1{font-size:19px;margin:6px 0 10px}.sheet .foot{margin-top:22px;padding-top:8px;border-top:1px solid var(--alu);display:flex;justify-content:space-between;font-size:11px;color:var(--slate)}
+.tl{display:grid;grid-template-columns:110px 1fr;gap:6px 12px;align-items:center;font-size:12px}
+.bar{height:10px;background:var(--alu2);position:relative;border-radius:2px}
+.bar i{position:absolute;top:0;bottom:0;border-radius:2px}
+.task{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--alu)}
+.task input[type=checkbox]{width:auto;margin-top:3px}
+.task .who{font-size:11px;color:var(--slate)}
+.task.done{opacity:.45;text-decoration:line-through}
+.feed li{margin:6px 0}.feed .d{color:var(--slate);font-variant-numeric:tabular-nums;margin-right:8px}
+.search{max-width:320px}
+kbd{font:inherit;font-size:11px;border:1px solid var(--alu);padding:0 5px;border-radius:2px;background:#fff}
+.calc{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;align-items:end}
+.big{font-size:28px;font-weight:500;font-variant-numeric:tabular-nums}
+.pill{display:inline-block;padding:2px 8px;border:1px solid var(--alu);border-radius:12px;font-size:12px;margin:2px 4px 2px 0;cursor:pointer}
+.pill.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+@media(max-width:700px){.wrap{padding:12px 12px 90px}.calc{grid-template-columns:1fr}.sheet{padding:16px}.mark{font-size:17px}}
+@media print{nav,form,.noprint,.kpis{display:none}.wrap{padding:0}.sheet{border:0;padding:0}}
+.src{font-size:11px;color:var(--slate)}.blocked{border-left:3px solid var(--red);padding:10px 12px;background:#FBEAE5;margin:10px 0}
+</style>
+</head>
+<body><div class="wrap">
+<div class="mark"><div><b>CORRIDOR</b><span>RECOVERY</span></div><small>Desk M1 · <span id="asof"></span> · rules v<span id="rv"></span> · <kbd>/</kbd> search · <kbd>n</kbd> new client · <kbd>1–7</kbd> tabs</small></div>
+<nav id="nav">
+<button class="on" data-t="dash">Dashboard</button>
+<button data-t="tasks">Tasks<span class="c" id="cTasks">0</span></button>
+<button data-t="clients">Clients<span class="c" id="cClients">0</span></button>
+<button data-t="entries">Entries<span class="c" id="cEntries">0</span></button>
+<button data-t="bucketb">Bucket B</button>
+<button data-t="findings">Findings</button>
+<button data-t="rules">Rules & feed</button>
+</nav>
+
+<section id="dash">
+<h1>Where the money and the clocks are</h1>
+<div class="kpis" id="kpis"></div>
+<div class="grid" style="grid-template-columns:1fr 1fr;gap:16px">
+<div><h2>Clocks — next 14 deadlines</h2><div id="clocks" class="panel"></div></div>
+<div><h2>Quick exposure calculator</h2><div class="panel">
+<div class="calc">
+<div><label>US sales Feb 2025–Feb 2026 (US$)</label><input id="qc_sales" type="number" value="2000000"></div>
+<div><label>Share not CUSMA-qualified</label><input id="qc_share" type="number" step="0.05" value="0.5"></div>
+<div><label>Blended rate paid</label><input id="qc_rate" type="number" step="0.05" value="0.30"></div>
+<div><div class="l muted small">Likely exposure</div><div class="big" id="qc_out"></div></div>
+</div>
+<p class="small muted" style="margin-top:8px">Use on the phone. Say "likely", never "you'll get". Fee at 10–22.5% shown when you generate a findings sheet.</p>
+</div></div>
+</div>
+<div class="note">Rule: no figure is quoted while any of a client's entries sits on an <span class="tag t-est">est.</span> liquidation date. The ACE date always wins. Non-IEEPA lines (232, 301, 338) are excluded automatically.</div>
+</section>
+
+<section id="tasks" hidden>
+<h1>Tasks — generated from the state of every file</h1>
+<p class="muted">Nothing here is typed in. Each task exists because the data says it should. Tick it when done; it disappears when the data no longer needs it.</p>
+<div class="row noprint"><span class="pill on" data-f="all">All</span><span class="pill" data-f="PK">PK</span><span class="pill" data-f="Desk">Desk</span><span class="pill" data-f="Broker">Partner broker</span><span class="pill" data-f="Client">Client</span></div>
+<div id="taskList" class="panel"></div>
+</section>
+
+<section id="clients" hidden>
+<h1>Clients</h1>
+<div class="row noprint"><input class="search" id="cSearch" placeholder="Search clients…"><button class="b s x" id="newClientBtn">+ New client</button></div>
+<form id="cf" hidden onsubmit="return false">
+<div class="grid">
+<div><label>Company</label><input name="company" required></div>
+<div><label>Bucket</label><select name="bucket"><option>A — exporter as IOR</option><option>B — exporter's US customer</option><option>C — Canadian importer (surtax)</option><option>D — origin certification</option></select></div>
+<div><label>Contact</label><input name="contact"></div>
+<div><label>Phone</label><input name="phone"></div>
+<div><label>Email</label><input name="email"></div>
+<div><label>Their customs broker</label><input name="broker"></div>
+<div><label>Stage</label><select name="stage"><option>Lead</option><option>Qualified</option><option>Engaged</option><option>Data in</option><option>Findings sent</option><option>Filed</option><option>Refunded</option><option>Closed</option></select></div>
+<div><label>US sales in window (US$)</label><input name="sales" type="number" min="0"></div>
+<div><label>Share NOT CUSMA-qualified</label><input name="share" type="number" step="0.05" min="0" max="1" value="0.5"></div>
+<div><label>Rate paid</label><input name="rate" type="number" step="0.05" value="0.35"></div>
+<div><label>ACE/ACH enrolled</label><select name="ach"><option>No</option><option>Yes</option><option>Unknown</option></select></div>
+<div><label>Engagement signed</label><input name="signed" type="date"></div>
+<div><label>Referred by (client)</label><input name="ref"></div>
+</div>
+<div><label>Notes</label><textarea name="notes" style="min-height:56px"></textarea></div>
+<div class="row"><button class="b" id="saveClient">Save client</button><button class="b s" id="cancelClient">Cancel</button></div>
+</form>
+<div class="tw" id="clientTable"></div>
+</section>
+
+<section id="entries" hidden>
+<h1>Entries</h1>
+<div class="row noprint"><div style="min-width:240px"><label>Assign to client</label><select id="entryClient"></select></div><input class="search" id="eSearch" placeholder="Filter entries…" style="align-self:flex-end"><a class="b s x" href="/api/entries/export.csv" style="align-self:flex-end;text-decoration:none">Export CSV</a><button class="b s x" id="loadFixture" style="align-self:flex-end">Load simulation fixture</button></div>
+<div class="drop" id="drop">Drop a broker entry report (.csv) here, or click to choose. Columns are auto-mapped: entry number, entry date, Chapter 99 HTS (and base HTS), entered value, duty rate or duties paid, liquidation date, consignee / importer of record. The mapping is remembered per broker. <input type="file" id="csvFile" accept=".csv,.txt" hidden></div>
+<div id="mapPanel"></div>
+<div class="tw" id="entryTable"></div>
+</section>
+
+<section id="bucketb" hidden>
+<h1>Bucket B — the client's US customers</h1>
+<p class="muted">Built from the consignee names on a client's entries. Ships in M2 (BUILD_SPEC "Bucket B"). The consignee names are already captured on every entry — see the "US consignee" column on the Entries tab.</p>
+</section>
+
+<section id="findings" hidden>
+<h1>Findings sheet</h1>
+<div class="row noprint"><div style="min-width:260px"><label>Client</label><select id="fsClient"></select></div><button class="b" id="genFs">Generate</button><button class="b s" id="draftFs">Internal draft</button><button class="b s" onclick="window.print()">Print / PDF</button></div>
+<p class="small muted">Generate is the client-facing path: it refuses while any IEEPA entry is on an estimated liquidation date (hard block). Internal draft renders the sheet for the desk only and is watermarked.</p>
+<div id="fsOut"></div>
+</section>
+
+<section id="rules" hidden>
+<h1>Rules the engine runs on</h1>
+<div class="panel"><div class="tw" id="ruleTable"></div>
+<p class="small muted" style="margin-top:8px">Each value is a row in the <code>rules</code> table with an effective date and a source; every computed figure stores the rule version it was computed with. Nothing changes a rule automatically — the rule-feed worker (M3) proposes, PK approves. IEEPA HTS lines recognised: 9903.01.xx. Excluded as non-refundable: 9903.80/81/85 (232 steel/alu), 9903.78 (232 copper), 9903.88–91 (301), 9903.94 (autos).</p></div>
+<h2>Rule feed</h2>
+<ul class="feed small">
+<li><span class="d">2026-09-08</span>Canada: 15/25/50% surtaxes on C$27.6B of US goods; remission/drawback via existing 2025 order (CBSA CN 26-23).</li>
+<li><span class="d">2026-09-08</span>US: five Section 338 proclamations incl. import bans from Sept 29 — not IEEPA, not refundable.</li>
+<li><span class="d">2026-04-20</span>CBP opened CAPE in ACE. Phase 1 = unliquidated or ≤80 days post-liquidation. File = CSV of entry numbers.</li>
+<li><span class="d">2026-03-04</span>CIT ordered CBP to liquidate/reliquidate non-final entries without IEEPA duties; interest applies.</li>
+<li><span class="d">2026-02-24</span>IEEPA collection ended · <span class="d">2026-02-20</span>SCOTUS: IEEPA tariffs unlawful.</li>
+<li><span class="d">2025-02-04</span>IEEPA duties begin on non-CUSMA Canadian goods (25%; 35% from 2025-08-01).</li>
+</ul>
+</section>
+</div>
+
+<script>
+// ===== state comes from the server; the engine runs there (src/engine) =====
+let S={clients:[],entries:[],tasks:[],dash:{kpis:[],clocks:[]},rules:{},ruleDetail:[],asOf:""};
+let editing=null,taskFilter="all",sortKey=null,sortDir=1;
+const money=n=>n==null?"—":"$"+Math.round(n).toLocaleString("en-US");
+const esc=s=>String(s??"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+async function api(path,opts={}){const r=await fetch(path,{...opts,headers:opts.body?{"Content-Type":"application/json"}:{},body:opts.body?JSON.stringify(opts.body):undefined});const d=await r.json().catch(()=>({}));if(!r.ok){const e=new Error(d.error||r.statusText);e.code=d.code;e.data=d;throw e;}return d;}
+async function load(){S=await api("/api/state");render();}
+
+// ===== render =====
+function render(){document.getElementById("asof").textContent="as of "+S.asOf;document.getElementById("rv").textContent=S.ruleVersionId;
+  renderDash();renderTasks();renderClients();renderEntries();fillSelects();renderRules();qc();
+  document.getElementById("cClients").textContent=S.clients.length;document.getElementById("cEntries").textContent=S.entries.length;
+  const open=S.tasks.filter(t=>!t.done);const hot=open.filter(t=>t.hot).length;const cT=document.getElementById("cTasks");cT.textContent=open.length;cT.className="c"+(hot?" hot":"");}
+function renderDash(){const r=S.rules;document.getElementById("kpis").innerHTML=S.dash.kpis.map(([l,v,c])=>`<div class="kpi ${c||""}"><div class="l">${l}</div><div class="v">${v}</div></div>`).join("");
+  const up=S.dash.clocks;const maxd=Math.max(30,...up.map(x=>x.days));
+  document.getElementById("clocks").innerHTML=up.length?`<div class="tl">${up.map(x=>`<div class="mono">${x.days}d · ${x.deadline}</div><div><div class="bar" title="${esc(x.client)}"><i style="left:0;width:${Math.max(2,100*x.days/maxd)}%;background:${x.days<r.urg?"var(--red)":x.phase.startsWith("Protest")?"var(--amber)":"var(--verd)"}"></i></div><div class="small muted">${esc(x.client)} · ${esc(x.entry)} · ${money(x.duty)} ${x.est?'<span class="tag t-est">est.</span>':""}</div></div>`).join("")}</div>`:`<p class="muted">No live deadlines. Load the simulation fixture on the Entries tab to see the engine.</p>`;}
+function renderTasks(){const list=S.tasks.filter(t=>taskFilter==="all"||t.who===taskFilter);
+  document.getElementById("taskList").innerHTML=list.length?list.map(t=>`<div class="task ${t.done?"done":""}"><input type="checkbox" data-task="${esc(t.id)}" ${t.done?"checked":""}><div><div>${t.hot?'<span class="tag t-gone">urgent</span>':""}${esc(t.t)}</div><div class="who">${t.who}</div></div></div>`).join(""):`<p class="muted">No tasks — nothing in the data needs doing.</p>`;
+  document.querySelectorAll("[data-task]").forEach(cb=>cb.onchange=async()=>{await api("/api/tasks/done",{method:"POST",body:{key:cb.dataset.task,done:cb.checked}});await load();});}
+const tagFor=p=>p.na?'<span class="tag t-na">'+esc(p.cls.label)+'</span>':p.phase.startsWith("Phase 1")?'<span class="tag t-p1">Phase 1</span>':p.phase.startsWith("Protest")?'<span class="tag t-pr">Protest</span>':p.phase.startsWith("Deadline")?'<span class="tag t-gone">Passed</span>':"";
+function renderClients(){const q=(document.getElementById("cSearch").value||"").toLowerCase();
+  const rows=S.clients.filter(c=>!q||JSON.stringify(c).toLowerCase().includes(q)).map(c=>{const st=c.stats;return `<tr class="${st.min!=null&&st.min<S.rules.urg?"urgent":""}"><td><strong>${esc(c.company)}</strong><div class="small muted">${esc(c.contact||"")} ${esc(c.phone||"")}${c.ref?" · via "+esc(c.ref):""}</div></td><td>${esc(c.bucket.split(" ")[0])}</td><td><select data-stage="${c.id}" style="padding:3px 4px;font-size:12px">${["Lead","Qualified","Engaged","Data in","Findings sent","Filed","Refunded","Closed"].map(s=>`<option ${s===c.stage?"selected":""}>${s}</option>`).join("")}</select></td><td>${esc(c.broker||"")}</td><td>${c.ach}</td><td class="n">${money(st.exposure)}</td><td class="n">${st.count}${st.est?` <span class="tag t-est">${st.est} est.</span>`:""}</td><td class="n">${money(st.total)}</td><td class="n">${money(st.fee)}</td><td class="n">${st.min==null?"—":st.min}</td><td><button class="b s x" data-edit="${c.id}">edit</button> <button class="b s x" data-del="${c.id}">remove</button></td></tr>`;}).join("");
+  document.getElementById("clientTable").innerHTML=S.clients.length?`<table><tr><th>Company</th><th>Bucket</th><th>Stage</th><th>Broker</th><th>ACE/ACH</th><th class="n">Est. exposure</th><th class="n">Entries</th><th class="n">IEEPA duty</th><th class="n">Fee if recovered</th><th class="n">Next clock (d)</th><th></th></tr>${rows}</table>`:`<p class="muted" style="padding:14px">No clients yet. Press <kbd>n</kbd> or load the simulation fixture on the Entries tab.</p>`;
+  document.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{const c=S.clients.find(x=>x.id==b.dataset.del);if(!confirm("Remove "+c.company+" and all their entries?"))return;await api("/api/clients/"+c.id,{method:"DELETE"});await load();});
+  document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openClient(S.clients.find(x=>x.id==b.dataset.edit)));
+  document.querySelectorAll("[data-stage]").forEach(s=>s.onchange=async()=>{await api("/api/clients/"+s.dataset.stage,{method:"PUT",body:{stage:s.value}});await load();});}
+function renderEntries(){const q=(document.getElementById("eSearch").value||"").toLowerCase();let list=S.entries.map(e=>({e,p:e.computed})).filter(x=>!q||JSON.stringify(x.e).toLowerCase().includes(q));
+  if(sortKey)list.sort((a,b)=>{const va=sortKey==="days"?(a.p.days??1e9):sortKey==="duty"?a.p.duty:(a.e[sortKey]||"");const vb=sortKey==="days"?(b.p.days??1e9):sortKey==="duty"?b.p.duty:(b.e[sortKey]||"");return (va>vb?1:va<vb?-1:0)*sortDir;});
+  const rows=list.map(({e,p})=>`<tr class="${p.na?"na":p.days!=null&&p.days<0?"gone":p.days!=null&&p.days<S.rules.urg?"urgent":""}"><td>${esc(e.entry)}</td><td>${esc(e.client)}</td><td>${esc(e.entryDate)}</td><td>${esc(e.hts||"")}${e.htsBase?`<div class="src">${esc(e.htsBase)}</div>`:""}</td><td class="n">${money(+e.value)}</td><td class="n">${e.rate?Math.round(e.rate*100)+"%":""}</td><td>${esc(e.liqDate||p.liqEff||"")} ${p.est&&!p.na?'<span class="tag t-est">est.</span>':`<span class="src">${esc(e.liqSource)}</span>`}</td><td class="n">${p.na?"—":money(p.duty)}</td><td>${tagFor(p)}</td><td>${p.deadline}</td><td class="n">${p.days==null?"—":p.days}</td><td class="small">${esc(e.consignee||"")}</td><td><button class="b s x" data-edel="${e.id}">x</button></td></tr>`).join("");
+  const th=(l,k,n)=>`<th class="${n?"n":""}" data-sort="${k}">${l}${sortKey===k?(sortDir>0?" ▲":" ▼"):""}</th>`;
+  document.getElementById("entryTable").innerHTML=S.entries.length?`<table><tr>${th("Entry #","entry")}${th("Client","client")}${th("Entry date","entryDate")}${th("HTS (Ch.99 / base)","hts")}${th("Value","value",1)}<th class="n">Rate</th><th>Liquidation</th>${th("IEEPA duty","duty",1)}<th>Phase</th><th>Deadline</th>${th("Days","days",1)}<th>US consignee</th><th></th></tr>${rows}</table>`:`<p class="muted" style="padding:14px">No entries yet.</p>`;
+  document.querySelectorAll("[data-edel]").forEach(b=>b.onclick=async()=>{await api("/api/entries/"+b.dataset.edel,{method:"DELETE"});await load();});
+  document.querySelectorAll("[data-sort]").forEach(h=>h.onclick=()=>{if(sortKey===h.dataset.sort)sortDir*=-1;else{sortKey=h.dataset.sort;sortDir=1;}renderEntries();});}
+function fillSelects(){const o=S.clients.map(c=>`<option value="${c.id}">${esc(c.company)}</option>`).join("");["entryClient","fsClient"].forEach(id=>{const el=document.getElementById(id);const v=el.value;el.innerHTML=o;if(v)el.value=v;});}
+function renderRules(){const names={protest_window_days:"Protest window (days)",phase1_window_days:"Phase 1 window (days post-liq.)",liquidation_lag_days:"Liquidation lag estimate (days)",urgent_threshold_days:"Urgent threshold (days)",fee_phase1:"Fee — Phase 1",fee_protest:"Fee — protest/complex",broker_share:"Broker share",realization_haircut:"Realization haircut"};
+  document.getElementById("ruleTable").innerHTML=`<table><tr><th>Rule</th><th class="n">Value</th><th>Effective from</th><th>Source</th><th class="n">Row</th></tr>${S.ruleDetail.map(d=>`<tr><td>${names[d.key]||d.key}</td><td class="n">${d.value}</td><td>${String(d.effective_from).slice(0,10)}</td><td class="small">${esc(d.source)}</td><td class="n small muted">#${d.id}</td></tr>`).join("")}</table>`;}
+function qc(){const v=(+document.getElementById("qc_sales").value||0)*(+document.getElementById("qc_share").value||0)*(+document.getElementById("qc_rate").value||0);document.getElementById("qc_out").textContent=money(v);}
+["qc_sales","qc_share","qc_rate"].forEach(id=>document.getElementById(id).oninput=qc);
+
+// ===== CSV ingestion: server auto-maps (and remembers the mapping per broker); the desk confirms =====
+const FIELDS=["entry","entryDate","hts","htsBase","value","rate","duty","liqDate","consignee","ior","port"];
+async function handleCsvText(text){const clientId=document.getElementById("entryClient").value;if(!clientId){alert("Add a client first, then import.");return;}
+  let pv;try{pv=await api("/api/entries/preview",{method:"POST",body:{csv:text,clientId}});}catch(e){alert(e.message);return;}
+  const client=S.clients.find(c=>c.id==clientId);const mp=document.getElementById("mapPanel");
+  mp.innerHTML=`<div class="panel"><h3>Column mapping — ${pv.rowCount} rows for ${esc(client.company)}${pv.savedMapping?' <span class="tag t-b">saved mapping for this broker</span>':""}</h3><div class="grid">${FIELDS.map(k=>`<div><label>${k}</label><select data-map="${k}"><option value="">— not present —</option>${pv.headers.map((h,i)=>`<option value="${i}" ${pv.map[k]===i?"selected":""}>${esc(h)}</option>`).join("")}</select></div>`).join("")}</div><div class="row"><button class="b" id="doImport">Import</button><button class="b s" id="cancelImport">Cancel</button></div><p class="small muted">Rows without an HTS line are treated as possibly IEEPA; rows with 232/301/autos lines are excluded from refund totals automatically. Rows already on file (same client + entry number) are skipped.</p></div>`;
+  document.getElementById("doImport").onclick=async()=>{const m={};document.querySelectorAll("[data-map]").forEach(s=>{if(s.value!=="")m[s.dataset.map]=+s.value;});try{const r=await api("/api/entries/import",{method:"POST",body:{csv:text,clientId,map:m}});mp.innerHTML=`<p class="muted">Imported ${r.imported} entries for ${esc(r.client)}${r.duplicates?` · ${r.duplicates} already on file`:""}${r.skipped?` · ${r.skipped} rows without an entry number skipped`:""}.</p>`;await load();}catch(e){alert(e.message);}};
+  document.getElementById("cancelImport").onclick=()=>mp.innerHTML="";}
+const drop=document.getElementById("drop"),csvFile=document.getElementById("csvFile");
+drop.onclick=()=>csvFile.click();csvFile.onchange=()=>{const f=csvFile.files[0];if(f)f.text().then(handleCsvText);csvFile.value="";};
+["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("over");}));["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("over");}));
+drop.addEventListener("drop",e=>{const f=e.dataTransfer.files[0];if(f)f.text().then(handleCsvText);});
+document.getElementById("loadFixture").onclick=async()=>{try{const r=await api("/api/dev/load-fixture",{method:"POST"});document.getElementById("mapPanel").innerHTML=`<p class="muted">Simulation fixture: imported ${r.imported} entries for ${esc(r.client)}${r.duplicates?` (${r.duplicates} already on file)`:""}.</p>`;await load();}catch(e){alert(e.message);}};
+
+// ===== findings sheet =====
+document.getElementById("genFs").onclick=async()=>{const id=document.getElementById("fsClient").value;const out=document.getElementById("fsOut");if(!id)return;
+  try{const r=await api("/api/findings/"+id);out.innerHTML=`<p class="small muted">Ref ${r.ref} · computed with rules v${r.ruleVersionId}</p>`+r.html;}
+  catch(e){if(e.code==="FINDINGS_BLOCKED")out.innerHTML=`<div class="blocked"><strong>Blocked.</strong> ${esc(e.message)}<div class="small muted" style="margin-top:4px">Non-negotiable: no client-facing figure while any IEEPA entry is on an estimated liquidation date. Use "Internal draft" to see the working numbers.</div></div>`;else out.innerHTML=`<p class="muted">${esc(e.message)}</p>`;}};
+document.getElementById("draftFs").onclick=async()=>{const id=document.getElementById("fsClient").value;const out=document.getElementById("fsOut");if(!id)return;
+  const r=await api("/api/findings/"+id+"/preview");out.innerHTML=(r.blocked?`<div class="blocked"><strong>Internal draft — not for release.</strong> ${r.estimated} IEEPA entries are on an estimated liquidation date; the client-facing sheet is blocked until ACE dates are confirmed.</div>`:`<p class="small muted">Internal draft.</p>`)+r.html;};
+
+// ===== client form =====
+function openClient(c){editing=c?c.id:null;const f=document.getElementById("cf");f.hidden=false;f.reset();if(c){for(const k in c){if(f[k]&&typeof c[k]!=="object")f[k].value=c[k];}}f.company.focus();window.scrollTo({top:f.offsetTop-80});}
+document.getElementById("newClientBtn").onclick=()=>openClient(null);document.getElementById("cancelClient").onclick=()=>{document.getElementById("cf").hidden=true;editing=null;};
+document.getElementById("saveClient").onclick=async()=>{const f=document.getElementById("cf");const o={};new FormData(f).forEach((v,k)=>o[k]=v);if(!o.company)return;
+  try{if(editing!=null)await api("/api/clients/"+editing,{method:"PUT",body:o});else await api("/api/clients",{method:"POST",body:o});f.hidden=true;editing=null;await load();}catch(e){alert(e.message);}};
+document.getElementById("cSearch").oninput=renderClients;document.getElementById("eSearch").oninput=renderEntries;
+document.querySelectorAll(".pill").forEach(p=>p.onclick=()=>{document.querySelectorAll(".pill").forEach(x=>x.classList.remove("on"));p.classList.add("on");taskFilter=p.dataset.f;renderTasks();});
+// tabs + keys
+const tabs=[...document.querySelectorAll("#nav button")];function go(b){tabs.forEach(x=>x.classList.remove("on"));b.classList.add("on");document.querySelectorAll("section").forEach(s=>s.hidden=s.id!==b.dataset.t);}
+tabs.forEach(b=>b.onclick=()=>go(b));
+document.addEventListener("keydown",e=>{if(["INPUT","TEXTAREA","SELECT"].includes(document.activeElement.tagName))return;if(e.key==="/"){e.preventDefault();go(tabs[2]);document.getElementById("cSearch").focus();}else if(e.key==="n"){go(tabs[2]);openClient(null);}else if(/^[1-7]$/.test(e.key)){go(tabs[+e.key-1]);}});
+load();
+</script>
+</body></html>
