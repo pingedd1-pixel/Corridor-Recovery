@@ -20,11 +20,11 @@ export const toEntry = r => ({ id: r.id, clientId: r.client_id, entry: r.entry_n
   duty: num(r.duty_amount), liqDate: r.liquidation_source === "estimated" ? "" : (r.liquidation_date ?? ""), liqSource: r.liquidation_source, consignee: r.consignee_name ?? "", ior: r.ior_name ?? "", port: r.port ?? "", status: r.status, filedVia: r.filed_via ?? "" });
 
 export async function loadState(db, t = today()) {
-  const { rules, ruleVersionId, detail } = await loadRules(db, t);
+  const { rules, texts, all, ruleVersionId, detail } = await loadRules(db, t);
   const clients = (await db.query(CLIENT_SQL)).rows.map(toClient);
   const entries = (await db.query(ENTRY_SQL)).rows.map(toEntry);
   const done = Object.fromEntries((await db.query("SELECT key FROM tasks WHERE done_at IS NOT NULL")).rows.map(r => [r.key, true]));
-  return { t, rules, ruleVersionId, ruleDetail: detail, clients, entries, done };
+  return { t, rules, texts, ruleRows: all, ruleVersionId, ruleDetail: detail, clients, entries, done };
 }
 
 // Recompute every figure, store it with its rule version, regenerate tasks (done flags persist by key).

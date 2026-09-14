@@ -106,10 +106,10 @@ app.post("/api/tasks/done", async (req, reply) => {
 });
 
 // ---------- documents (BUILD_SPEC §4). Hard block for figure-bearing types lives in generateDocument ----------
-app.get("/api/documents/types", async () => Object.entries(TYPES).map(([type, t]) => ({ type, name: t.name, carriesFigures: t.carriesFigures, needs: t.needs })));
+app.get("/api/documents/types", async () => Object.entries(TYPES).map(([type, t]) => ({ type, name: t.name, carriesFigures: t.carriesFigures, needs: t.needs, counterparty: t.counterparty || "client" })));
 app.get("/api/documents", async req => listDocuments(db, req.query.clientId ? Number(req.query.clientId) : null));
 app.post("/api/documents", async (req, reply) => {
-  const { clientId, type, params, pdf } = req.body || {}; if (!clientId || !type) return reply.code(400).send({ error: "clientId and type are required" });
+  const { clientId, type, params, pdf } = req.body || {}; if (!type) return reply.code(400).send({ error: "type is required" }); if (!clientId && TYPES[type]?.counterparty !== "broker") return reply.code(400).send({ error: "clientId is required" });
   const d = await generateDocument(db, { clientId, type, params: params || {}, asOf: asOf(req), pdf: pdf !== false }); // throws FindingsBlockedError → 409
   return d;
 });

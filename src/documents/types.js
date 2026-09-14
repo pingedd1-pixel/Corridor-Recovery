@@ -11,12 +11,27 @@ const longDate = d => new Date(d + "T00:00:00").toLocaleDateString("en-CA", { ye
 export const TYPES = {
   FS: { name: "Findings sheet", carriesFigures: true, needs: [] },
   CN: { name: "Cover note", carriesFigures: true, needs: [] },
-  EL: { name: "Engagement letter", carriesFigures: false, needs: [] },
-  AU: { name: "Authorization and confidentiality", carriesFigures: false, needs: [] },
+  EL: { name: "Engagement letter", carriesFigures: false, needs: [], template: "CM-EL-2026-TEMPLATE" },
+  AU: { name: "Authorization", carriesFigures: false, needs: [], template: "CM-AU-2026-TEMPLATE" },
+  NDA: { name: "Mutual non-disclosure agreement", carriesFigures: false, needs: [], template: "CM-NDA-2026-TEMPLATE" },
   BI: { name: "Introduction to a US customer", carriesFigures: false, needs: ["consignee"] },
+  BSA: { name: "Filing broker services agreement", carriesFigures: false, needs: ["brokerName"], counterparty: "broker", template: "CM-BSA-2026-TEMPLATE" },
 };
 
-// ctx: { c (client, prototype shape), entries (all), rules, asOf (Date), ref, params }
+// Bracketed values in the counsel drafts are placeholder rule rows (migration 004). Until a row is approved by
+// counsel/PK (approved_by not starting with "placeholder") it renders in [brackets], exactly as in the draft.
+export function ph(ruleRows, key, fmtv = v => v) {
+  const r = ruleRows?.[key]; if (!r) return `[${key}]`;
+  const raw = r.value != null ? fmtv(r.value) : (r.text ?? "[ ]");
+  if (raw === "[ ]") return raw;
+  return r.placeholder ? `[${raw}]` : String(raw);
+}
+const pctOf = v => Math.round(v * 1000) / 10 + "%";
+// "[22.5]%" as in the counsel drafts: the bracket wraps the number, not the unit.
+const phPct = (ruleRows, key) => { const r = ruleRows?.[key]; if (!r || r.value == null) return "[ ]%"; const n = Math.round(r.value * 1000) / 10; return r.placeholder ? `[${n}]%` : `${n}%`; };
+const CLIENT_LEGAL = c => c.legalName || c.company;
+
+// ctx: { c (client, prototype shape; null for broker documents), entries (all), rules, ruleRows, asOf (Date), ref, params }
 export function render(type, ctx) {
   const t = TYPES[type]; if (!t) throw new Error("unknown document type " + type);
   for (const k of t.needs) if (!ctx.params?.[k]) throw Object.assign(new Error(`${t.name} needs ${k}`), { statusCode: 400 });
@@ -44,51 +59,98 @@ const RENDER = {
 <p class="small muted">This note reports what the customs entries show and the rules as published. It is not legal advice and not a guarantee of recovery.</p>${foot()}`;
   },
 
-  EL: ({ c, rules, asOf, ref }) => {
-    const day = fmt(asOf);
+  EL: ({ c, rules, ruleRows, asOf, ref }) => {
+    const day = fmt(asOf); const P = k => ph(ruleRows, k); const auRef = ref.replace("-EL-", "-AU-");
     return `${mark()}${docline({ typeName: "Engagement letter", ref, to: `${c.contact || "—"}, ${c.company}`, asOf: day })}
-<h1>Engagement letter — US tariff (IEEPA) refund recovery</h1>
-<p>This letter sets out the terms on which ${esc(ORG.legalLine)} ("Corridor") will act for <strong>${esc(c.company)}</strong> ("the Client") to identify and recover US import duties collected under the International Emergency Economic Powers Act (IEEPA) and refundable following the US Supreme Court's decision of 20 February 2026.</p>
-<h2>1. What Corridor does</h2>
-<ol>
-<li>Obtains the Client's US customs entry data from the Client's customs broker or the Client's ACE account, under the authorization signed with this letter.</li>
-<li>Identifies the entries that carried IEEPA duty, the refund phase each falls in under CBP's CAPE process, the governing deadline, and the amount likely refundable, subject to what the entries show and to CBP's validation.</li>
-<li>Prepares the claim file and coordinates its filing through ${esc(ORG.brokerSide)}, who files CAPE declarations and protests in its own name as a licensed filer.</li>
-<li>Tracks each filing, reports monthly, and walks the Client through ACE account and ACH refund enrolment, without which CBP does not pay approved refunds.</li>
-</ol>
-<p>Corridor prepares and coordinates. Licensed customs brokers file. Corridor does not give legal advice; entries past the protest window are assessed with counsel of the Client's choosing.</p>
-<h2>2. Fee — contingent, payable only when funds arrive</h2>
-<table><tr><th>Recovery</th><th>Fee</th><th>Applies to</th></tr>
-<tr><td>Phase 1 refund (entry unliquidated or recently liquidated; CAPE declaration)</td><td style="white-space:nowrap">${pct(rules.fee1)} of the refund</td><td>Finding, checking, filing coordination, and chasing the refund to the bank</td></tr>
-<tr><td>Protest or complex refund (entry liquidated past the Phase 1 window; protest per entry; reconciliation; bank set-up)</td><td style="white-space:nowrap">${pct(rules.fee2)} of the refund</td><td>Deadline work per entry</td></tr></table>
-<p>No refund, no fee. Corridor invoices when the refund, including any interest, is received by the Client, and the invoice is payable within [15] days. There is no retainer and no fee on entries that are not refunded. Fees are exclusive of applicable taxes.</p>
-<h2>3. The Client's part</h2>
-<ul><li>Sign the authorization (${esc(ref.replace("-EL-", "-AU-"))}) so the broker can release entry data.</li><li>Confirm the ACE account and ACH enrolment when asked, and provide any document CBP requests for validation.</li><li>Tell Corridor of any refund claim already filed for the same entries, by anyone.</li><li>Pay the fee within the period above once a refund lands.</li></ul>
-<h2>4. Confidentiality and data</h2>
-<p>Entry data is confidential. Corridor uses it only for this engagement, stores it encrypted, shares it only with the partner broker for filing, and deletes or returns it at the end of the engagement on request, subject to record-keeping required of the broker. British Columbia's Personal Information Protection Act applies to any personal information in it.</p>
-<h2>5. Term, termination and what is not promised</h2>
-<p>This engagement runs until the last filed entry is refunded, rejected or withdrawn. Either party may end it on [30] days' written notice; the fee remains payable on any refund resulting from a filing made before the notice. Corridor does not guarantee any recovery, amount, or timing. Figures quoted before the entries are reviewed are ranges; figures in the findings sheet are subject to CBP's validation and to the rules as published on the "As of" date. This letter is governed by the laws of British Columbia.</p>
-<div class="sig"><div><span class="n">${esc(ORG.signer)}</span><br><span class="r">${esc(ORG.signerRole)}, ${esc(ORG.brand)}</span><br><br>Signature: <span class="field"></span> Date: <span class="field" style="min-width:90px"></span></div>
-<div><span class="n">${esc(c.contact || "Authorized signatory")}</span><br><span class="r">${esc(c.company)}</span><br><br>Signature: <span class="field"></span> Date: <span class="field" style="min-width:90px"></span></div></div>
-<p class="small muted" style="margin-top:18px">Template CM-EL-001. Square-bracketed terms are set by the principal before sending.</p>${foot()}`;
+<h1>Engagement for tariff-recovery services</h1>
+<p>Between <strong>${esc(CLIENT_LEGAL(c))}</strong> ("Client") and ${esc(ORG.legalLine)} ("Corridor"). Effective on the date of the last signature.</p>
+<h2>1. Services</h2>
+<p>Corridor will (a) review Client's US and, where applicable, Canadian customs entry data for the period 1 February 2025 to the date of this letter; (b) identify duties that may be recoverable under the US Supreme Court's decision in <em>Learning Resources v. Trump</em> and subsequent orders, and under Canadian remission, relief and drawback provisions; (c) deliver a written findings sheet; (d) prepare and coordinate recovery filings; (e) manage deadlines and report to Client monthly until each matter closes.</p>
+<p>Filings with US Customs and Border Protection and the Canada Border Services Agency are made by licensed customs brokers engaged by Corridor ("Filing Brokers"). Corridor is not a law firm or a licensed customs brokerage and does not provide legal advice. Where a matter requires counsel, Corridor will say so and Client decides whether to retain counsel.</p>
+<h2>2. Fees — contingent</h2>
+<table><tr><th>Recovery</th><th>Fee</th></tr>
+<tr><td>Straightforward US refund entries (as designated on the findings sheet)</td><td style="white-space:nowrap">${pctOf(rules.fee1)} of the refund received, including interest</td></tr>
+<tr><td>US entries requiring protest, correction, reconciliation handling or resolution of payment failures</td><td style="white-space:nowrap">${phPct(ruleRows, "fee_protest")} of the refund received, including interest</td></tr>
+<tr><td>Canadian surtax remission, relief or drawback</td><td style="white-space:nowrap">${phPct(ruleRows, "fee_canadian_recovery")} of the amount recovered</td></tr></table>
+<p>No fee is payable unless and until funds are received by Client. Corridor invoices on receipt; payment due within ${P("invoice_due_days")} days. Fees are exclusive of GST/HST.</p>
+<p>Corridor bears Filing Broker fees for declarations and protests on Client's matters. Litigation, appeals or counsel fees are not included and will not be incurred without Client's written approval.</p>
+<h2>3. Client obligations</h2>
+<ul>
+<li>Provide the authorization in Schedule A; instruct its customs broker(s) to release entry data; provide duty statements, entry summaries and related records on request.</li>
+<li>Maintain, or permit Filing Brokers to establish, an active ACE account and refund (ACH) enrolment; keep its importer record current.</li>
+<li>Not file or cause to be filed duplicate claims on the same entries during the term; inform Corridor of any prior filings.</li>
+<li>Confirm that information provided is, to Client's knowledge, accurate.</li>
+</ul>
+<h2>4. Exclusivity and term</h2>
+<p>Client engages Corridor exclusively for recovery of the duties described in 1 for ${P("engagement_exclusivity_months")} months from signature, and thereafter until all matters opened during the term are closed. Either party may terminate on ${P("termination_notice_days")} days' written notice; fees remain payable on any recovery arising from work done before termination.</p>
+<h2>5. No guarantee</h2>
+<p>Recovery depends on government processing, the state of Client's entries and ongoing litigation. Corridor makes no representation as to amount or timing of any recovery. Estimates are estimates.</p>
+<h2>6. Confidentiality and data</h2>
+<p>Governed by the mutual non-disclosure agreement of even date. Corridor holds customs data only as long as needed for the services, uses it only for the services, and does not sell or share it except with Filing Brokers and counsel engaged on Client's matters.</p>
+<h2>7. General</h2>
+<p>Governing law: British Columbia. Disputes: ${esc(P("dispute_resolution"))}. Entire agreement; amendments in writing; counterparts and electronic signature accepted.</p>
+<div class="sig"><div><span class="n">For Client</span><br><span class="r">${esc(CLIENT_LEGAL(c))}</span><br><br>Name / title / date: <span class="field"></span></div>
+<div><span class="n">For Corridor Recovery</span><br><span class="r">${esc(ORG.legalLine)}</span><br><br>Name / title / date: <span class="field"></span></div></div>
+<p class="small muted" style="margin-top:18px">Schedule A — Authorization (attached, ${esc(auRef)}). Template CM-EL-2026-TEMPLATE, counsel draft 2026-09-13; bracketed terms are placeholders pending counsel.</p>${foot()}`;
   },
 
-  AU: ({ c, asOf, ref }) => {
-    const day = fmt(asOf); const broker = c.broker || "[the Client's customs broker]";
-    return `${mark()}${docline({ typeName: "Authorization and confidentiality", ref, to: `${c.contact || "—"}, ${c.company}`, asOf: day })}
-<h1>Authorization to obtain customs entry data, and confidentiality undertaking</h1>
-<p><strong>${esc(c.company)}</strong> ("the Client") authorizes ${esc(ORG.legalLine)} ("Corridor") and ${esc(ORG.brokerSide)} acting with Corridor to:</p>
+  AU: ({ c, ruleRows, asOf, ref, params }) => {
+    const day = fmt(asOf); const P = k => ph(ruleRows, k);
+    const ein = params?.usImporterNumber || "[ ]", bn = params?.canadianBusinessNumber || "[ ]", address = params?.address || c.address || "[address]";
+    return `${mark()}${docline({ typeName: "Authorization", ref, to: `${c.contact || "—"}, ${c.company}`, asOf: day })}
+<h1>Authorization to obtain customs data and coordinate recovery filings</h1>
+<p><strong>${esc(CLIENT_LEGAL(c))}</strong>, ${esc(address)}, US importer number / EIN ${esc(ein)}, Canadian business number ${esc(bn)} ("Client"), authorizes ${esc(ORG.legalLine)} ("Corridor") as follows:</p>
 <ol>
-<li>Request and receive from <strong>${esc(broker)}</strong>, and from US Customs and Border Protection through the ACE system, the Client's US customs entry records for entries made between 1 February 2025 and 28 February 2026: entry numbers, entry and liquidation dates, ports, tariff classifications including Chapter 99 lines, entered values, duties paid, and consignee and importer-of-record names.</li>
-<li>Use those records to determine which entries carried IEEPA duty and are refundable, and to prepare refund claims for the Client's review.</li>
-<li>Where the Client separately instructs, have the partner broker file CAPE declarations and protests for the Client's entries.</li>
+<li>To request and receive from Client's customs brokers${c.broker ? ` (including ${esc(c.broker)})` : ""}, freight forwarders and Client's own systems all entry summaries, duty statements, invoices, liquidation notices, ACE reports and related records for entries made between 1 February 2025 and the date below.</li>
+<li>To review those records and prepare analyses and claim packages on Client's behalf.</li>
+<li>To engage licensed customs brokers ("Filing Brokers") to file refund declarations, protests, remission, relief and drawback claims on Client's behalf, and to instruct them on Client's matters. Client will execute any power of attorney a Filing Broker requires.</li>
+<li>To communicate with US Customs and Border Protection and the Canada Border Services Agency through Filing Brokers regarding those filings.</li>
 </ol>
-<p>This authorization covers customs entry data only. It does not authorize access to financial statements, contracts, customer prices, or bank accounts. The Client may withdraw it at any time by written notice.</p>
-<h2>Corridor's undertaking</h2>
-<p>Corridor will treat the records as confidential; use them only for the purpose above; store them encrypted with access logged; disclose them only to the partner broker for filing, or where required by law; and return or delete them at the end of the engagement on request, subject to the broker's record-keeping obligations. This undertaking survives withdrawal of the authorization.</p>
-<div class="sig"><div><span class="n">${esc(c.contact || "Authorized signatory")}</span><br><span class="r">for ${esc(c.company)}</span><br><br>Signature: <span class="field"></span> Date: <span class="field" style="min-width:90px"></span></div>
-<div><span class="n">${esc(ORG.signer)}</span><br><span class="r">${esc(ORG.signerRole)}, ${esc(ORG.brand)}</span><br><br>Signature: <span class="field"></span> Date: <span class="field" style="min-width:90px"></span></div></div>
-<p class="small muted" style="margin-top:18px">Template CM-AU-001. To: ${esc(broker)} — please release the entry report to Corridor on receipt of this signed page.</p>${foot()}`;
+<p>This authorization does not permit Corridor to receive funds on Client's behalf, to bind Client to any expense beyond the engagement letter, or to make representations to any authority other than through a licensed Filing Broker. It is valid for ${P("authorization_validity_months")} months and may be revoked in writing. A copy is as good as the original.</p>
+<div class="sig"><div><span class="n">Authorized signatory for Client</span><br><span class="r">${esc(CLIENT_LEGAL(c))}</span><br><br>Name / title / date: <span class="field"></span></div>
+<div><span class="n">Witness</span><br><span class="r">&nbsp;</span><br><br>Name / title / date: <span class="field"></span></div></div>
+<p class="small muted" style="margin-top:18px">Template CM-AU-2026-TEMPLATE, counsel draft 2026-09-13; bracketed terms are placeholders pending counsel. Schedule A to the engagement letter.</p>${foot()}`;
+  },
+
+  NDA: ({ c, ruleRows, asOf, ref }) => {
+    const day = fmt(asOf); const P = k => ph(ruleRows, k);
+    return `${mark()}${docline({ typeName: "Mutual non-disclosure agreement", ref, to: `${c.contact || "—"}, ${c.company}`, asOf: day })}
+<h1>Mutual non-disclosure agreement</h1>
+<p>Between <strong>${esc(CLIENT_LEGAL(c))}</strong> and ${esc(ORG.legalLine)}, each a "Party".</p>
+<p><strong>Confidential Information</strong> means any non-public business, financial, customs, shipment, customer, pricing or technical information disclosed by one Party to the other in connection with tariff-recovery services, in any form, whether or not marked.</p>
+<p>Each Party will use the other's Confidential Information only for the services, protect it with at least reasonable care, and disclose it only to its personnel, licensed customs brokers and professional advisers who need it and are bound by equivalent obligations.</p>
+<p><strong>Exclusions:</strong> information that is public through no fault of the receiving Party, already known to it, independently developed, or lawfully received from a third party. Disclosure required by law or a government authority is permitted with prompt notice where lawful.</p>
+<p>Customs entry data is Client Confidential Information. Corridor will store it encrypted, restrict access by role, keep an access log, and delete or return it within ${P("data_deletion_days")} days after the last matter closes, except as retained by law.</p>
+<p><strong>Term:</strong> ${P("nda_term_years")} years from signature; customs data and personal information indefinitely.</p>
+<p>No licence, no obligation to proceed, no warranty. Governing law British Columbia. Electronic signature accepted.</p>
+<div class="sig"><div><span class="n">For Client</span><br><span class="r">${esc(CLIENT_LEGAL(c))}</span><br><br>Name / title / date: <span class="field"></span></div>
+<div><span class="n">For Corridor Recovery</span><br><span class="r">${esc(ORG.legalLine)}</span><br><br>Name / title / date: <span class="field"></span></div></div>
+<p class="small muted" style="margin-top:18px">Template CM-NDA-2026-TEMPLATE, counsel draft 2026-09-13; bracketed terms are placeholders pending counsel.</p>${foot()}`;
+  },
+
+  BSA: ({ ruleRows, asOf, ref, params }) => {
+    const day = fmt(asOf); const P = k => ph(ruleRows, k); const broker = params.brokerName; const lic = params.licenceNo || "[ ]";
+    const usd = k => { const v = P(k); return v === "[ ]" ? "US$[ ]" : "US$" + v; };
+    return `${mark()}${docline({ typeName: "Filing broker services agreement", ref, to: `${broker}`, asOf: day })}
+<h1>Services agreement — licensed filing broker</h1>
+<p>Between ${esc(ORG.legalLine)} ("Corridor") and <strong>${esc(broker)}</strong>, licensed customs broker, licence no. ${esc(lic)} ("Broker").</p>
+<h2>1. Services</h2>
+<p>Broker will, on Corridor's instruction and for clients Corridor has engaged ("Corridor Clients"): obtain entry data from ACE or CBSA systems where authorized; file refund declarations, protests, remission, relief and drawback claims; respond to agency validations and requests; report status to Corridor within ${P("broker_status_report_days")} business days of any agency action. Broker exercises independent professional judgement as a licensee and may decline any filing it considers improper; it will say so promptly in writing.</p>
+<h2>2. Fees</h2>
+<p>Corridor pays Broker a flat fee of ${usd("broker_flat_fee_per_client_usd")} per Corridor Client for declarations covering up to ${P("broker_entries_included")} entries, ${usd("broker_fee_additional_block_usd")} per additional ${P("broker_additional_block_entries")} entries, and ${usd("broker_fee_per_protest_usd")} per protest, invoiced monthly, payable in ${P("broker_invoice_due_days")} days.</p>
+<p>In addition, Broker receives ${P("broker_fee_share_pct")}% of Corridor's collected contingency fee on each Corridor Client matter Broker filed, payable within ${P("broker_share_due_days")} days of Corridor's receipt.</p>
+<p>No other fees are charged to Corridor Clients by Broker without Corridor's written consent.</p>
+<h2>3. Non-circumvention and non-solicitation</h2>
+<p>For the term and ${P("broker_noncircumvention_months")} months after, Broker will not, directly or through affiliates, solicit, engage or provide tariff-recovery or duty-refund services to any Corridor Client, or to any prospect Corridor introduced in writing, other than through this agreement, and will not disclose Corridor's methods, documents or client list. Broker may continue ordinary customs brokerage for any client that was its client before introduction, and will disclose such existing relationships when a Corridor Client is assigned.</p>
+<h2>4. Data, confidentiality and compliance</h2>
+<p>Client data is confidential and used only for the filings. Broker maintains its licence, bond and insurance, complies with all customs laws and regulations, and keeps records as required. Each party carries its own professional liability insurance.</p>
+<h2>5. Term</h2>
+<p>${P("broker_agreement_term_months")} months, renewing annually unless terminated on ${P("broker_termination_notice_days")} days' notice. Filings in progress are completed. Sections 3 and 4 survive.</p>
+<h2>6. General</h2>
+<p>Independent contractors. Governing law ${esc(P("bsa_governing_law"))}. Disputes: ${esc(P("dispute_resolution"))}. Electronic signature accepted.</p>
+<div class="sig"><div><span class="n">For Corridor Recovery</span><br><span class="r">${esc(ORG.legalLine)}</span><br><br>Name / title / date: <span class="field"></span></div>
+<div><span class="n">For Broker</span><br><span class="r">${esc(broker)}</span><br><br>Name / title / date: <span class="field"></span></div></div>
+<p class="small muted" style="margin-top:18px">Template CM-BSA-2026-TEMPLATE, counsel draft 2026-09-13; bracketed terms are placeholders pending counsel.</p>${foot()}`;
   },
 
   BI: ({ c, entries, rules, asOf, ref, params }) => {
