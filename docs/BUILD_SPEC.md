@@ -1,4 +1,4 @@
-# Corridor Recovery — build spec for Claude Code (v0.3, real stack)
+# Corridor Recovery — build spec for Claude Code (v0.3.1, real stack)
 Read this file fully before writing code. The prototype `corridor-recovery-desk-v02.html` is the functional reference: same engine, same documents, same rules. Rebuild it as a private multi-user web app.
 
 ## Non-negotiables
@@ -14,9 +14,11 @@ Postgres · Node (Fastify) or Python (FastAPI) · React + Tailwind (or keep the 
 
 ## Data model
 clients(id, company, bucket, contact, phone, email, broker_name, stage, us_sales_window, share_non_cusma, rate_paid, ach_status, engagement_signed_at, referred_by_client_id, notes)
-entries(id, client_id, entry_no, entry_date, port, hts, entered_value, duty_rate, duty_amount, liquidation_date, liquidation_source[ace|estimated|broker], consignee_name, ior_name, status[not_filed|cape_filed|protest_filed|accepted|rejected|refunded], filed_via, claimed_amount, refunded_amount, refunded_at, raw_row jsonb)
+entries(id, client_id, entry_no, entry_date, port, hts, hts_base, entered_value, duty_rate, duty_amount, liquidation_date, liquidation_source[ace|estimated|broker], consignee_name, ior_name, status[not_filed|cape_filed|protest_filed|accepted|rejected|refunded], filed_via, claimed_amount, refunded_amount, refunded_at, raw_row jsonb)
 rules(id, key, value, effective_from, effective_to, source, approved_by, created_at)
-computed(entry_id, rule_version_id, ieepa_duty, phase, governing_deadline, days_remaining, is_estimated, computed_at)
+rule_versions(id, fingerprint, rule_ids int[], snapshot jsonb, created_at) — the immutable set of rule rows in force when a figure was computed; `computed.rule_version_id` and `documents.rule_version_id` point here
+broker_mappings(id, broker_name, headers_fingerprint, mapping jsonb, created_at) — saved column mapping per broker (see Ingestion)
+computed(entry_id, rule_version_id, ieepa_duty, phase, governing_deadline, days_remaining, is_estimated, classification, computed_at)
 tasks(id, client_id, entry_id null, key, owner_role, text, hot, generated_at, done_at, done_by) — regenerated from state on every change; done flags persist by key
 documents(id, client_id, ref, type, html, pdf_url, created_by, created_at)
 bulletins(id, source, published_at, url, raw_text, ai_summary jsonb, proposed_rule_changes jsonb, reviewed_by, decision)
@@ -24,7 +26,7 @@ prospects_b(id, source_client_id, consignee_name, entries_count, duty_on_source_
 users(id, name, role, email), audit_log(id, user_id, action, table, row_id, before jsonb, after jsonb, at)
 
 ## Ingestion
-- CSV/XLSX upload with auto-mapping (aliases as in prototype), mapping saved per broker so the second report from the same broker needs no mapping.
+- CSV/XLSX upload with auto-mapping (aliases as in prototype, with exact-match priority and a Chapter 99 column preferred over the base HTS column — `hts` is the Chapter 99 line the engine classifies on, `hts_base` the base tariff line), mapping saved per broker so the second report from the same broker needs no mapping.
 - PDF broker statements: send pages to Claude with a strict JSON schema; require ≥0.9 self-reported confidence per row or route to human review queue.
 - ACE reports (ES-001-style extracts) as CSV — same path.
 - De-dupe on (client_id, entry_no).
