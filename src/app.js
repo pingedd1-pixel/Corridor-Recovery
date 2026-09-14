@@ -74,9 +74,11 @@ app.post("/api/entries/import", async (req, reply) => {
   let imported = 0, duplicates = 0;
   for (const e of entries) {
     const liq = e.liqDate || null;
-    const r = await db.query(`INSERT INTO entries(client_id, entry_no, entry_date, port, hts, hts_base, entered_value, duty_rate, duty_amount, liquidation_date, liquidation_source, consignee_name, ior_name, raw_row)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) ON CONFLICT (client_id, entry_no) DO NOTHING RETURNING id`,
-      [c.id, e.entry, e.entryDate || null, e.port || null, e.hts || null, e.htsBase || null, e.value, e.rate === "" ? null : e.rate, e.duty, liq, liq ? (source === "ace" ? "ace" : "broker") : "estimated", e.consignee || null, e.ior || null, JSON.stringify(e.raw)]);
+    const r = await db.query(`INSERT INTO entries(client_id, entry_no, entry_date, port, hts, hts_base, entered_value, duty_rate, duty_amount, liquidation_date, liquidation_source, consignee_name, ior_name, raw_row,
+      reconciliation_flag, reconciliation_on_file, surety_paid, drawback_flag, adcvd_suspended)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) ON CONFLICT (client_id, entry_no) DO NOTHING RETURNING id`,
+      [c.id, e.entry, e.entryDate || null, e.port || null, e.hts || null, e.htsBase || null, e.value, e.rate === "" ? null : e.rate, e.duty, liq, liq ? (source === "ace" ? "ace" : "broker") : "estimated", e.consignee || null, e.ior || null, JSON.stringify(e.raw),
+      !!e.reconciliation_flag, !!e.reconciliation_on_file, !!e.surety_paid, !!e.drawback_flag, !!e.adcvd_suspended]);
     if (r.rows.length) { imported++; await audit(db, "insert", "entries", r.rows[0].id, null, { entry_no: e.entry, client_id: c.id, source }); } else duplicates++;
   }
   if (c.broker_name) await db.query("INSERT INTO broker_mappings(broker_name, headers_fingerprint, mapping) VALUES ($1,$2,$3) ON CONFLICT (broker_name, headers_fingerprint) DO UPDATE SET mapping=EXCLUDED.mapping", [c.broker_name, headersFingerprint(headers), JSON.stringify(map)]);

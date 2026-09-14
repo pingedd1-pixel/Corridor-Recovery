@@ -9,5 +9,8 @@ export function clientStats(c, entries, r, t = today()) {
   const live = es.filter(x => x.p.days != null && x.p.days >= 0 && !x.p.na).sort((a, b) => a.p.days - b.p.days); const min = live.length ? live[0].p.days : null; const past = es.filter(x => x.p.days != null && x.p.days < 0).length;
   const exposure = (+c.sales || 0) * (+c.share || 0) * (+c.rate || 0); const fee = p1 * r.fee1 + pr * r.fee2;
   const consignees = [...new Set(es.map(x => x.e.consignee).filter(Boolean))];
-  return { es, p1, pr, gone, na, est, min, past, exposure, fee, total: p1 + pr + gone, next: live[0] || null, consignees };
+  // Flag routes (PK 2026-09-14): not in the prototype's p1/pr/gone; reported separately, never in "recoverable now".
+  const p2 = sum(x => x.p.phase.startsWith("Phase 2")), manual = sum(x => x.p.phase.startsWith("Manual")), future = sum(x => x.p.phase.startsWith("Future"));
+  const flagged = es.filter(x => x.p.route).length;
+  return { es, p1, pr, gone, na, est, min, past, exposure, fee, total: p1 + pr + gone, next: live[0] || null, consignees, p2, manual, future, flagged, identified: p1 + pr + gone + p2 + manual + future };
 }

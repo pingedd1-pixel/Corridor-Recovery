@@ -17,6 +17,10 @@ export function tasks(clients, entries, done, r, t = today()) {
     // Added 2026-09-14 (rules: no_filing_until_complete, Aprio 2026-05-06): accepted declarations cannot be amended.
     if (st.p1 > 0 && st.est > 0 && ["Findings sent", "Filed"].includes(c.stage)) out.push({ id: id("complete"), who: "Desk", t: `${c.company}: do not file CAPE until the entry list is complete — ${st.est} entries still on estimated liquidation dates; an accepted declaration cannot be amended`, c, hot: true });
     st.es.filter(x => x.p.phase === "Protest required" && x.p.days >= 0).sort((a, b) => a.p.days - b.p.days).slice(0, 3).forEach(x => out.push({ id: id("prot|" + x.e.entry), who: "Broker", t: `${c.company}: protest entry ${x.e.entry} by ${fmt(x.p.deadline)} (${x.p.days}d, ${money(x.p.duty)})`, c, hot: x.p.days < r.urg, entry: x.e.entry }));
+    // Added 2026-09-14 (entry flags): manual paths need the broker's confirmation before anything is filed.
+    const manualEs = st.es.filter(x => x.p.route === "manual"), adcvdEs = st.es.filter(x => x.p.route === "adcvd");
+    if (manualEs.length) out.push({ id: id("manual"), who: "Broker", t: `${c.company}: manual path — confirm with broker: ${manualEs.length} surety-paid / drawback entries (${money(manualEs.reduce((a, x) => a + x.p.duty, 0))}) are excluded from Phase 1`, c });
+    if (adcvdEs.length) out.push({ id: id("adcvd"), who: "Broker", t: `${c.company}: manual processing (19 USC 1520) — ${adcvdEs.length} AD/CVD-suspended entries (${money(adcvdEs.reduce((a, x) => a + x.p.duty, 0))}); no CAPE filing`, c });
     if (st.past > 0) out.push({ id: id("past"), who: "Desk", t: `${c.company}: ${st.past} entries past protest deadline (${money(st.gone)}) — flag to counsel, do not promise`, c });
     if (c.bucket.startsWith("A") && ["Findings sent", "Filed", "Refunded"].includes(c.stage)) out.push({ id: id("bb"), who: "PK", t: `${c.company}: ask for US customer introductions (${st.consignees.length} consignees already on file)`, c });
     if (c.stage === "Refunded") out.push({ id: id("inv"), who: "Desk", t: `${c.company}: refund landed — invoice fee (${money(st.fee)} indicative)`, c });
