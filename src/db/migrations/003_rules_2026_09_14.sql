@@ -1,9 +1,14 @@
 -- Rule changes approved by PK 2026-09-14 (docs/BUILD_SPEC.md "Rule changes approved 2026-09-14").
 -- Not every rule is a number: labels, routing rules and document requirements are text. `value` becomes nullable
 -- and `value_text` is added; each row carries exactly one of the two. The engine's numeric rule set is unchanged.
+-- Idempotent with migration 004 (documents branch), which adds the same column: whichever applies first wins.
 ALTER TABLE rules ALTER COLUMN value DROP NOT NULL;
-ALTER TABLE rules ADD COLUMN value_text text;
-ALTER TABLE rules ADD CONSTRAINT rules_value_one_of CHECK ((value IS NULL) <> (value_text IS NULL));
+ALTER TABLE rules ADD COLUMN IF NOT EXISTS value_text text;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'rules_value_one_of') THEN
+    ALTER TABLE rules ADD CONSTRAINT rules_value_one_of CHECK ((value IS NULL) <> (value_text IS NULL));
+  END IF;
+END $$;
 
 INSERT INTO rules (key, value_text, effective_from, source, approved_by) VALUES
   ('phase3_label',
