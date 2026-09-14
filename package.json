@@ -2,7 +2,7 @@
   "name": "corridor-recovery",
   "version": "0.1.0",
   "private": true,
-  "description": "Corridor Recovery desk — tariff-recovery engine, tasks and dashboard",
+  "description": "Corridor Recovery desk \u2014 tariff-recovery engine, tasks and dashboard",
   "type": "module",
   "engines": {
     "node": ">=22"
@@ -11,7 +11,8 @@
     "dev": "TZ=America/Vancouver node src/server.js",
     "start": "TZ=America/Vancouver node src/server.js",
     "migrate": "TZ=America/Vancouver node src/db/migrate.js",
-    "test": "TZ=America/Vancouver node --test \"test/**/*.test.js\""
+    "test": "TZ=America/Vancouver node --test \"test/**/*.test.js\"",
+    "golden": "TZ=America/Vancouver node scripts/capture-golden.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.3.0",

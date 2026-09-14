@@ -9,6 +9,7 @@ Stack: Node ≥ 22 · Fastify · Postgres (embedded PGlite for dev/tests, no ins
 ```bash
 npm install
 npm test          # engine acceptance test on docs/fixtures-sim-broker-entry-report.csv + schema tests
+npm run golden    # regenerate the parity fixture FROM the prototype (headless) — never edit the golden JSON by hand
 npm run dev       # http://127.0.0.1:3000 — Entries tab → "Load simulation fixture"
 ```
 

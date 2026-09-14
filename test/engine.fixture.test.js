@@ -32,6 +32,7 @@ test("fixture ingests 28 entries, none skipped", () => {
 });
 
 test("phase(): classification, phase, deadline, days, estimated flag and IEEPA duty match the prototype for every entry", () => {
+  assert.equal(expected.prototypeVersion, "Desk v0.2.1");
   const { entries } = load();
   const got = entries.map(e => { const p = phase(e, RULES, asOf); return [e.entry, p.cls.kind, p.phase, fmt(p.deadline), p.days, p.est, p.duty]; });
   assert.deepEqual(got, expected.entries);
@@ -96,6 +97,8 @@ test("renderFindings() reproduces the prototype's findings sheet", () => {
   const { entries } = load();
   const html = renderFindings(client, entries, RULES, "CM-FS-2026-001", asOf);
   for (const s of expected.findingsIncludes) assert.ok(html.includes(s), "missing: " + s);
+  const rows = (html.match(/<tr><td>([^<]+)<\/td><td class="n">\$[\d,]+<\/td>/g) || []).map(x => x.match(/<td>([^<]+)</)[1]);
+  assert.deepEqual(rows, expected.findingsRows, "findings sheet category rows (v0.2.1: Phase 3, not Deadline passed)");
   assert.ok(html.includes("As of 2026-09-13"));
   assert.ok(!/guarantee[^ ]* (of|to)/.test(html.replace("not a guarantee of recovery", "")), "no guarantees in copy");
 });
@@ -116,5 +119,6 @@ test("rules are inputs, not constants: changing the Phase 1 window moves entries
   const e = entries.find(x => x.entry === "KJ7-4408830-5"); // liquidated 2026-09-09, 4 days ago
   assert.equal(phase(e, RULES, asOf).phase, "Phase 1 — recently liquidated");
   assert.equal(phase(e, { ...RULES, p1: 3 }, asOf).phase, "Protest required");
+  assert.equal(phase({ ...e, liqDate: "2026-01-01" }, RULES, asOf).phase, "Phase 3 — finally liquidated (contested on appeal)");
   assert.equal(fmt(phase(e, { ...RULES, p1: 3 }, asOf).deadline), "2027-03-08");
 });

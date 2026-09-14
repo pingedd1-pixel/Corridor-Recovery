@@ -1,60 +1,170 @@
 {
-  "_note": "Golden output of prototype/desk-v0.2.html (the functional reference) run on docs/fixtures-sim-broker-entry-report.csv with asOf=2026-09-13, default rules (prot 180, p1 80, lag 314, urg 30, fee1 0.10, fee2 0.225, brok 0.25, real 0.8) and the fixture client below. Captured from the prototype in-browser on 2026-09-13.",
-  "asOf": "2026-09-13",
-  "client": { "company": "Fraser Valley Cabinetry Ltd", "bucket": "A — exporter as IOR", "contact": "Dana Fraser", "phone": "604-000-0100", "broker": "Sim Broker Ltd", "stage": "Data in", "sales": 1500000, "share": 0.6, "rate": 0.35, "ach": "No", "signed": "", "ref": "", "notes": "Simulation fixture" },
-  "mapping": { "entry": "Entry Number", "entryDate": "Entry Date", "hts": "Chapter 99 HTS", "htsBase": "HTS Number", "value": "Entered Value (USD)", "rate": "Duty Rate", "duty": "Duties Paid (USD)", "liqDate": "Liquidation Date", "consignee": "Ultimate Consignee", "ior": "Importer of Record", "port": "Port of Entry" },
-  "entries": [
-    ["KJ7-4408810-0", "ieepa", "Deadline passed — litigation only", "2026-06-21", -84, false, 22750],
-    ["KJ7-4408811-9", "ieepa", "Deadline passed — litigation only", "2026-07-08", -67, false, 18375],
-    ["KJ7-4408812-6", "ieepa", "Deadline passed — litigation only", "2026-07-19", -56, false, 10500],
-    ["KJ7-4408813-6", "ieepa", "Deadline passed — litigation only", "2026-07-28", -47, false, 30000],
-    ["KJ7-4408814-9", "ieepa", "Deadline passed — litigation only", "2026-08-16", -28, false, 14500],
-    ["KJ7-4408815-3", "ieepa", "Deadline passed — litigation only", "2026-08-27", -17, false, 10500],
-    ["KJ7-4408816-6", "ieepa", "Deadline passed — litigation only", "2026-09-09", -4, false, 18375],
-    ["KJ7-4408817-8", "s232", "Not IEEPA", "", null, false, 0],
-    ["KJ7-4408818-3", "ieepa", "Protest required", "2026-10-01", 18, false, 36500],
-    ["KJ7-4408819-9", "ieepa", "Protest required", "2026-10-14", 31, false, 10500],
-    ["KJ7-4408820-8", "ieepa", "Protest required", "2026-10-31", 48, false, 36500],
-    ["KJ7-4408821-7", "ieepa", "Protest required", "2026-11-15", 63, false, 30000],
-    ["KJ7-4408822-3", "ieepa", "Protest required", "2026-11-24", 72, false, 14500],
-    ["KJ7-4408823-5", "ieepa", "Protest required", "2026-12-09", 87, false, 31850],
-    ["KJ7-4408824-1", "ieepa", "Protest required", "2026-12-20", 98, false, 14700],
-    ["KJ7-4408825-7", "ieepa", "Phase 1 — recently liquidated", "2026-09-23", 10, false, 20300],
-    ["KJ7-4408826-8", "ieepa", "Phase 1 — recently liquidated", "2026-10-05", 22, false, 14700],
-    ["KJ7-4408827-7", "ieepa", "Phase 1 — recently liquidated", "2026-10-20", 37, false, 42000],
-    ["KJ7-4408828-7", "ieepa", "Phase 1 — recently liquidated", "2026-10-31", 48, false, 25725],
-    ["KJ7-4408829-9", "ieepa", "Phase 1 — recently liquidated", "2026-11-13", 61, false, 25725],
-    ["KJ7-4408830-5", "ieepa", "Phase 1 — recently liquidated", "2026-11-28", 76, false, 51100],
-    ["KJ7-4408831-1", "ieepa", "Phase 1 — unliquidated", "2026-12-12", 90, true, 42000],
-    ["KJ7-4408832-2", "ieepa", "Phase 1 — unliquidated", "2026-12-22", 100, true, 25725],
-    ["KJ7-4408833-1", "ieepa", "Phase 1 — unliquidated", "2027-01-07", 116, true, 31850],
-    ["KJ7-4408834-2", "ieepa", "Phase 1 — unliquidated", "2027-01-20", 129, true, 25725],
-    ["KJ7-4408835-6", "ieepa", "Phase 1 — unliquidated", "2027-02-05", 145, true, 51100],
-    ["KJ7-4408836-2", "ieepa", "Phase 1 — unliquidated", "2027-02-17", 157, true, 20300],
-    ["KJ7-4408837-3", "ieepa", "Phase 1 — unliquidated", "2027-02-26", 166, true, 51100]
-  ],
-  "entryColumns": ["entry", "cls", "phase", "deadline", "days", "est", "ieepaDuty"],
-  "estimatedLiqEff": { "KJ7-4408831-1": "2026-09-23", "KJ7-4408832-2": "2026-10-03", "KJ7-4408833-1": "2026-10-19", "KJ7-4408834-2": "2026-11-01", "KJ7-4408835-6": "2026-11-17", "KJ7-4408836-2": "2026-11-29", "KJ7-4408837-3": "2026-12-08" },
-  "stats": { "count": 28, "p1": 427350, "pr": 174550, "gone": 125000, "na": 1, "est": 7, "min": 10, "past": 7, "exposure": 315000, "fee": 82008.75, "total": 726900, "next": { "entry": "KJ7-4408825-7", "days": 10, "deadline": "2026-09-23" }, "consignees": ["Summit Kitchen Supply Inc", "Pacific Home Products LLC"] },
-  "dash": { "duty": 726900, "p1": 427350, "pr": 174550, "gone": 125000, "urg": 3, "past": 7, "est": 7, "na": 1, "gross": 65607, "net": 49205.25 },
-  "tasks": [
-    { "id": "Fraser Valley Cabinetry Ltd|ace", "who": "Broker", "hot": true, "t": "Fraser Valley Cabinetry Ltd: pull ACE liquidation dates for 7 estimated entries" },
-    { "id": "Fraser Valley Cabinetry Ltd|ach", "who": "Client", "hot": false, "t": "Fraser Valley Cabinetry Ltd: ACE portal + ACH refund enrolment not confirmed — walk them through it" },
-    { "id": "Fraser Valley Cabinetry Ltd|prot|KJ7-4408818-3", "who": "Broker", "hot": true, "t": "Fraser Valley Cabinetry Ltd: protest entry KJ7-4408818-3 by 2026-10-01 (18d, $36,500)" },
-    { "id": "Fraser Valley Cabinetry Ltd|prot|KJ7-4408819-9", "who": "Broker", "hot": false, "t": "Fraser Valley Cabinetry Ltd: protest entry KJ7-4408819-9 by 2026-10-14 (31d, $10,500)" },
-    { "id": "Fraser Valley Cabinetry Ltd|prot|KJ7-4408820-8", "who": "Broker", "hot": false, "t": "Fraser Valley Cabinetry Ltd: protest entry KJ7-4408820-8 by 2026-10-31 (48d, $36,500)" },
-    { "id": "Fraser Valley Cabinetry Ltd|past", "who": "Desk", "hot": false, "t": "Fraser Valley Cabinetry Ltd: 7 entries past protest deadline ($125,000) — flag to counsel, do not promise" }
-  ],
-  "findingsIncludes": [
-    "We reviewed 28 US customs entries for Fraser Valley Cabinetry Ltd",
-    "(1 carried non-IEEPA duty lines and are excluded",
-    "7 entries are on an estimated liquidation date",
-    "IEEPA duty identified: <strong>$726,900</strong>",
-    "<td class=\"n\">$427,350</td>",
-    "<td class=\"n\">$174,550</td>",
-    "<td class=\"n\">$125,000</td>",
-    "Indicative fee on full recovery: <strong>$82,009</strong>",
-    "2. ACE liquidation dates for 7 entries. 3. ",
-    "we count 2 on your entries"
+ "_note": "Golden output of prototype/desk-v0.2.html (Desk v0.2.1) — the functional reference — run headlessly on docs/fixtures-sim-broker-entry-report.csv with asOf=2026-09-13, default rules and the fixture client below. Regenerate with: npm run golden. Do not edit by hand.",
+ "asOf": "2026-09-13",
+ "prototypeVersion": "Desk v0.2.1",
+ "client": {
+  "company": "Fraser Valley Cabinetry Ltd",
+  "bucket": "A — exporter as IOR",
+  "contact": "Dana Fraser",
+  "phone": "604-000-0100",
+  "broker": "Sim Broker Ltd",
+  "stage": "Data in",
+  "sales": 1500000,
+  "share": 0.6,
+  "rate": 0.35,
+  "ach": "No",
+  "signed": "",
+  "ref": "",
+  "notes": "Simulation fixture"
+ },
+ "mapping": {
+  "entry": "Entry Number",
+  "entryDate": "Entry Date",
+  "hts": "Chapter 99 HTS",
+  "htsBase": "HTS Number",
+  "value": "Entered Value (USD)",
+  "rate": "Duty Rate",
+  "duty": "Duties Paid (USD)",
+  "liqDate": "Liquidation Date",
+  "consignee": "Ultimate Consignee",
+  "ior": "Importer of Record",
+  "port": "Port of Entry"
+ },
+ "entries": [
+  ["KJ7-4408810-0", "ieepa", "Phase 3 — finally liquidated (contested on appeal)", "2026-06-21", -84, false, 22750],
+  ["KJ7-4408811-9", "ieepa", "Phase 3 — finally liquidated (contested on appeal)", "2026-07-08", -67, false, 18375],
+  ["KJ7-4408812-6", "ieepa", "Phase 3 — finally liquidated (contested on appeal)", "2026-07-19", -56, false, 10500],
+  ["KJ7-4408813-6", "ieepa", "Phase 3 — finally liquidated (contested on appeal)", "2026-07-28", -47, false, 30000],
+  ["KJ7-4408814-9", "ieepa", "Phase 3 — finally liquidated (contested on appeal)", "2026-08-16", -28, false, 14500],
+  ["KJ7-4408815-3", "ieepa", "Phase 3 — finally liquidated (contested on appeal)", "2026-08-27", -17, false, 10500],
+  ["KJ7-4408816-6", "ieepa", "Phase 3 — finally liquidated (contested on appeal)", "2026-09-09", -4, false, 18375],
+  ["KJ7-4408817-8", "s232", "Not IEEPA", "", null, false, 0],
+  ["KJ7-4408818-3", "ieepa", "Protest required", "2026-10-01", 18, false, 36500],
+  ["KJ7-4408819-9", "ieepa", "Protest required", "2026-10-14", 31, false, 10500],
+  ["KJ7-4408820-8", "ieepa", "Protest required", "2026-10-31", 48, false, 36500],
+  ["KJ7-4408821-7", "ieepa", "Protest required", "2026-11-15", 63, false, 30000],
+  ["KJ7-4408822-3", "ieepa", "Protest required", "2026-11-24", 72, false, 14500],
+  ["KJ7-4408823-5", "ieepa", "Protest required", "2026-12-09", 87, false, 31850],
+  ["KJ7-4408824-1", "ieepa", "Protest required", "2026-12-20", 98, false, 14700],
+  ["KJ7-4408825-7", "ieepa", "Phase 1 — recently liquidated", "2026-09-23", 10, false, 20300],
+  ["KJ7-4408826-8", "ieepa", "Phase 1 — recently liquidated", "2026-10-05", 22, false, 14700],
+  ["KJ7-4408827-7", "ieepa", "Phase 1 — recently liquidated", "2026-10-20", 37, false, 42000],
+  ["KJ7-4408828-7", "ieepa", "Phase 1 — recently liquidated", "2026-10-31", 48, false, 25725],
+  ["KJ7-4408829-9", "ieepa", "Phase 1 — recently liquidated", "2026-11-13", 61, false, 25725],
+  ["KJ7-4408830-5", "ieepa", "Phase 1 — recently liquidated", "2026-11-28", 76, false, 51100],
+  ["KJ7-4408831-1", "ieepa", "Phase 1 — unliquidated", "2026-12-12", 90, true, 42000],
+  ["KJ7-4408832-2", "ieepa", "Phase 1 — unliquidated", "2026-12-22", 100, true, 25725],
+  ["KJ7-4408833-1", "ieepa", "Phase 1 — unliquidated", "2027-01-07", 116, true, 31850],
+  ["KJ7-4408834-2", "ieepa", "Phase 1 — unliquidated", "2027-01-20", 129, true, 25725],
+  ["KJ7-4408835-6", "ieepa", "Phase 1 — unliquidated", "2027-02-05", 145, true, 51100],
+  ["KJ7-4408836-2", "ieepa", "Phase 1 — unliquidated", "2027-02-17", 157, true, 20300],
+  ["KJ7-4408837-3", "ieepa", "Phase 1 — unliquidated", "2027-02-26", 166, true, 51100]
+ ],
+ "entryColumns": [
+  "entry",
+  "cls",
+  "phase",
+  "deadline",
+  "days",
+  "est",
+  "ieepaDuty"
+ ],
+ "estimatedLiqEff": {
+  "KJ7-4408831-1": "2026-09-23",
+  "KJ7-4408832-2": "2026-10-03",
+  "KJ7-4408833-1": "2026-10-19",
+  "KJ7-4408834-2": "2026-11-01",
+  "KJ7-4408835-6": "2026-11-17",
+  "KJ7-4408836-2": "2026-11-29",
+  "KJ7-4408837-3": "2026-12-08"
+ },
+ "stats": {
+  "count": 28,
+  "p1": 427350,
+  "pr": 174550,
+  "gone": 125000,
+  "na": 1,
+  "est": 7,
+  "min": 10,
+  "past": 7,
+  "exposure": 315000,
+  "fee": 82008.75,
+  "total": 726900,
+  "next": {
+   "entry": "KJ7-4408825-7",
+   "days": 10,
+   "deadline": "2026-09-23"
+  },
+  "consignees": [
+   "Summit Kitchen Supply Inc",
+   "Pacific Home Products LLC"
   ]
+ },
+ "dash": {
+  "duty": 726900,
+  "p1": 427350,
+  "pr": 174550,
+  "gone": 125000,
+  "urg": 3,
+  "past": 7,
+  "est": 7,
+  "na": 1,
+  "gross": 65607,
+  "net": 49205.25
+ },
+ "tasks": [
+  {
+   "id": "Fraser Valley Cabinetry Ltd|ace",
+   "who": "Broker",
+   "hot": true,
+   "t": "Fraser Valley Cabinetry Ltd: pull ACE liquidation dates for 7 estimated entries"
+  },
+  {
+   "id": "Fraser Valley Cabinetry Ltd|ach",
+   "who": "Client",
+   "hot": false,
+   "t": "Fraser Valley Cabinetry Ltd: ACE portal + ACH refund enrolment not confirmed — walk them through it"
+  },
+  {
+   "id": "Fraser Valley Cabinetry Ltd|prot|KJ7-4408818-3",
+   "who": "Broker",
+   "hot": true,
+   "t": "Fraser Valley Cabinetry Ltd: protest entry KJ7-4408818-3 by 2026-10-01 (18d, $36,500)"
+  },
+  {
+   "id": "Fraser Valley Cabinetry Ltd|prot|KJ7-4408819-9",
+   "who": "Broker",
+   "hot": false,
+   "t": "Fraser Valley Cabinetry Ltd: protest entry KJ7-4408819-9 by 2026-10-14 (31d, $10,500)"
+  },
+  {
+   "id": "Fraser Valley Cabinetry Ltd|prot|KJ7-4408820-8",
+   "who": "Broker",
+   "hot": false,
+   "t": "Fraser Valley Cabinetry Ltd: protest entry KJ7-4408820-8 by 2026-10-31 (48d, $36,500)"
+  },
+  {
+   "id": "Fraser Valley Cabinetry Ltd|past",
+   "who": "Desk",
+   "hot": false,
+   "t": "Fraser Valley Cabinetry Ltd: 7 entries past protest deadline ($125,000) — flag to counsel, do not promise"
+  }
+ ],
+ "findingsIncludes": [
+  "We reviewed 28 US customs entries for Fraser Valley Cabinetry Ltd",
+  "(1 carried non-IEEPA duty lines and are excluded",
+  "7 entries are on an estimated liquidation date",
+  "IEEPA duty identified: <strong>$726,900</strong>",
+  "<td class=\"n\">$427,350</td>",
+  "<td class=\"n\">$174,550</td>",
+  "<td class=\"n\">$125,000</td>",
+  "Indicative fee on full recovery: <strong>$82,009</strong>",
+  "2. ACE liquidation dates for 7 entries. 3. ",
+  "we count 2 on your entries"
+ ],
+ "findingsRows": [
+  "Filable now in CAPE (Phase 1)",
+  "Protest required",
+  "Phase 3 — finally liquidated"
+ ]
 }

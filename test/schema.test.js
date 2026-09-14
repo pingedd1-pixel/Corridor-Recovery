@@ -10,10 +10,10 @@ let db;
 before(async () => { db = await openDb({ memory: true }); await migrate(db); });
 after(async () => { await db.close(); });
 
-test("migration 001 applies once and is idempotent", async () => {
+test("migrations apply once and are idempotent", async () => {
   assert.deepEqual(await migrate(db), []);
   const { rows } = await db.query("SELECT name FROM schema_migrations ORDER BY name");
-  assert.deepEqual(rows.map(r => r.name), ["001_init.sql"]);
+  assert.deepEqual(rows.map(r => r.name), ["001_init.sql", "003_rules_2026_09_14.sql"]);
   const tables = (await db.query("SELECT table_name FROM information_schema.tables WHERE table_schema='public' ORDER BY 1")).rows.map(r => r.table_name);
   for (const t of ["clients", "entries", "rules", "rule_versions", "computed", "tasks", "documents", "bulletins", "prospects_b", "users", "audit_log", "broker_mappings"]) assert.ok(tables.includes(t), t);
 });
@@ -25,6 +25,14 @@ test("rules load as of a date with sources, and pin a rule_version", async () =>
   assert.ok(detail.every(d => d.source && d.source.length > 10));
   const again = await loadRules(db, "2026-09-13");
   assert.equal(again.ruleVersionId, ruleVersionId, "same rule set → same version");
+  assert.equal(again.texts.phase3_label, undefined, "text rules approved 2026-09-14 are not in force on 2026-09-13");
+  const later = await loadRules(db, "2026-09-14");
+  assert.notEqual(later.ruleVersionId, ruleVersionId, "the six approved rows change the rule version from 2026-09-14");
+  assert.deepEqual(later.rules, rules, "numeric rule set unchanged");
+  assert.deepEqual(Object.keys(later.texts).sort(), ["form_4811_payee", "no_filing_until_complete", "phase1_exclusions", "phase2_reconciliation", "phase3_label", "step3_document"]);
+  assert.ok(later.texts.phase3_label.startsWith("Phase 3 — finally liquidated (contested on appeal)"));
+  assert.ok(later.detail.find(d => d.key === "phase3_label").source.includes("GingerControl"));
+  await assert.rejects(() => db.query("INSERT INTO rules(key, value, value_text, effective_from, source) VALUES ('x', 1, 'y', '2026-01-01', 's')"), /check|constraint/i);
 });
 
 test("a rule change with an effective date yields a new rule_version and leaves history intact", async () => {
