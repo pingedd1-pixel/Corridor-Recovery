@@ -65,14 +65,14 @@ kbd{font:inherit;font-size:11px;border:1px solid var(--alu);padding:0 5px;border
 </style>
 </head>
 <body><div class="wrap">
-<div class="mark"><div><b>CORRIDOR</b><span>RECOVERY</span></div><small>Desk M1 · <span id="asof"></span> · rules v<span id="rv"></span> · <kbd>/</kbd> search · <kbd>n</kbd> new client · <kbd>1–7</kbd> tabs</small></div>
+<div class="mark"><div><b>CORRIDOR</b><span>RECOVERY</span></div><small>Desk M2 · <span id="asof"></span> · rules v<span id="rv"></span> · <kbd>/</kbd> search · <kbd>n</kbd> new client · <kbd>1–7</kbd> tabs</small></div>
 <nav id="nav">
 <button class="on" data-t="dash">Dashboard</button>
 <button data-t="tasks">Tasks<span class="c" id="cTasks">0</span></button>
 <button data-t="clients">Clients<span class="c" id="cClients">0</span></button>
 <button data-t="entries">Entries<span class="c" id="cEntries">0</span></button>
 <button data-t="bucketb">Bucket B</button>
-<button data-t="findings">Findings</button>
+<button data-t="findings">Documents</button>
 <button data-t="rules">Rules & feed</button>
 </nav>
 
@@ -140,10 +140,11 @@ kbd{font:inherit;font-size:11px;border:1px solid var(--alu);padding:0 5px;border
 </section>
 
 <section id="findings" hidden>
-<h1>Findings sheet</h1>
-<div class="row noprint"><div style="min-width:260px"><label>Client</label><select id="fsClient"></select></div><button class="b" id="genFs">Generate</button><button class="b s" id="draftFs">Internal draft</button><button class="b s" onclick="window.print()">Print / PDF</button></div>
-<p class="small muted">Generate is the client-facing path: it refuses while any IEEPA entry is on an estimated liquidation date (hard block). Internal draft renders the sheet for the desk only and is watermarked.</p>
+<h1>Documents</h1>
+<div class="row noprint"><div style="min-width:240px"><label>Client</label><select id="fsClient"></select></div><div style="min-width:220px"><label>Document</label><select id="docType"></select></div><div id="docParams" style="min-width:220px" hidden><label>US consignee</label><select id="docConsignee"></select></div><button class="b" id="genDoc" style="align-self:flex-end">Generate + PDF</button><button class="b s" id="draftFs" style="align-self:flex-end">Internal draft (findings)</button></div>
+<p class="small muted">Generate is the client-facing path: the findings sheet and cover note refuse while any IEEPA entry is on an estimated liquidation date (hard block). Every document gets a CM-TYPE-YYYY-NNN reference, an "As of" date, the rule version it was computed with, and a PDF on the Corridor template. Internal draft renders the findings sheet for the desk only, watermarked.</p>
 <div id="fsOut"></div>
+<h2>Generated</h2><div class="tw" id="docList"></div>
 </section>
 
 <section id="rules" hidden>
@@ -196,7 +197,7 @@ function renderEntries(){const q=(document.getElementById("eSearch").value||"").
   document.getElementById("entryTable").innerHTML=S.entries.length?`<table><tr>${th("Entry #","entry")}${th("Client","client")}${th("Entry date","entryDate")}${th("HTS (Ch.99 / base)","hts")}${th("Value","value",1)}<th class="n">Rate</th><th>Liquidation</th>${th("IEEPA duty","duty",1)}<th>Phase</th><th>Deadline</th>${th("Days","days",1)}<th>US consignee</th><th></th></tr>${rows}</table>`:`<p class="muted" style="padding:14px">No entries yet.</p>`;
   document.querySelectorAll("[data-edel]").forEach(b=>b.onclick=async()=>{await api("/api/entries/"+b.dataset.edel,{method:"DELETE"});await load();});
   document.querySelectorAll("[data-sort]").forEach(h=>h.onclick=()=>{if(sortKey===h.dataset.sort)sortDir*=-1;else{sortKey=h.dataset.sort;sortDir=1;}renderEntries();});}
-function fillSelects(){const o=S.clients.map(c=>`<option value="${c.id}">${esc(c.company)}</option>`).join("");["entryClient","fsClient"].forEach(id=>{const el=document.getElementById(id);const v=el.value;el.innerHTML=o;if(v)el.value=v;});}
+function fillSelects(){const o=S.clients.map(c=>`<option value="${c.id}">${esc(c.company)}</option>`).join("");["entryClient","fsClient"].forEach(id=>{const el=document.getElementById(id);const v=el.value;el.innerHTML=o;if(v)el.value=v;});if(DOC_TYPES.length){docParamsUI();renderDocs();}}
 function renderRules(){const names={protest_window_days:"Protest window (days)",phase1_window_days:"Phase 1 window (days post-liq.)",liquidation_lag_days:"Liquidation lag estimate (days)",urgent_threshold_days:"Urgent threshold (days)",fee_phase1:"Fee — Phase 1",fee_protest:"Fee — protest/complex",broker_share:"Broker share",realization_haircut:"Realization haircut"};
   document.getElementById("ruleTable").innerHTML=`<table><tr><th>Rule</th><th class="n">Value</th><th>Effective from</th><th>Source</th><th class="n">Row</th></tr>${S.ruleDetail.map(d=>`<tr><td>${names[d.key]||d.key}</td><td class="n">${d.value}</td><td>${String(d.effective_from).slice(0,10)}</td><td class="small">${esc(d.source)}</td><td class="n small muted">#${d.id}</td></tr>`).join("")}</table>`;}
 function qc(){const v=(+document.getElementById("qc_sales").value||0)*(+document.getElementById("qc_share").value||0)*(+document.getElementById("qc_rate").value||0);document.getElementById("qc_out").textContent=money(v);}
@@ -216,9 +217,19 @@ drop.onclick=()=>csvFile.click();csvFile.onchange=()=>{const f=csvFile.files[0];
 drop.addEventListener("drop",e=>{const f=e.dataTransfer.files[0];if(f)f.text().then(handleCsvText);});
 document.getElementById("loadFixture").onclick=async()=>{try{const r=await api("/api/dev/load-fixture",{method:"POST"});document.getElementById("mapPanel").innerHTML=`<p class="muted">Simulation fixture: imported ${r.imported} entries for ${esc(r.client)}${r.duplicates?` (${r.duplicates} already on file)`:""}.</p>`;await load();}catch(e){alert(e.message);}};
 
-// ===== findings sheet =====
-document.getElementById("genFs").onclick=async()=>{const id=document.getElementById("fsClient").value;const out=document.getElementById("fsOut");if(!id)return;
-  try{const r=await api("/api/findings/"+id);out.innerHTML=`<p class="small muted">Ref ${r.ref} · computed with rules v${r.ruleVersionId}</p>`+r.html;}
+// ===== documents =====
+let DOC_TYPES=[];
+async function loadDocTypes(){DOC_TYPES=await api("/api/documents/types");document.getElementById("docType").innerHTML=DOC_TYPES.map(t=>`<option value="${t.type}">${esc(t.name)} (${t.type})${t.carriesFigures?" · figures":""}</option>`).join("");docParamsUI();}
+function docParamsUI(){const t=DOC_TYPES.find(x=>x.type===document.getElementById("docType").value);const need=t&&t.needs.includes("consignee");const box=document.getElementById("docParams");box.hidden=!need;if(need){const c=S.clients.find(x=>x.id==document.getElementById("fsClient").value);const names=c?c.stats.consignees:[];document.getElementById("docConsignee").innerHTML=names.length?names.map(n=>`<option>${esc(n)}</option>`).join(""):`<option value="">— no consignee names on this client's entries —</option>`;}}
+document.getElementById("docType").onchange=docParamsUI;document.getElementById("fsClient").onchange=()=>{docParamsUI();renderDocs();};
+async function renderDocs(){const id=document.getElementById("fsClient").value;if(!id){document.getElementById("docList").innerHTML="";return;}const list=await api("/api/documents?clientId="+id);
+  document.getElementById("docList").innerHTML=list.length?`<table><tr><th>Ref</th><th>Document</th><th>As of</th><th>Rules</th><th>Created</th><th></th></tr>${list.map(d=>`<tr><td><strong>${esc(d.ref)}</strong></td><td>${esc(d.typeName)}${d.params&&d.params.consignee?`<div class="small muted">to ${esc(d.params.consignee)}</div>`:""}</td><td>${esc(d.as_of||"")}</td><td class="small muted">v${d.rule_version_id||"—"}</td><td class="small muted">${String(d.created_at).slice(0,16).replace("T"," ")}</td><td>${d.pdf_url?`<a class="b s x" href="${d.pdf_url}" target="_blank" style="text-decoration:none">PDF</a> `:""}<button class="b s x" data-doc="${d.id}">view</button></td></tr>`).join("")}</table>`:`<p class="muted" style="padding:14px">No documents yet for this client.</p>`;
+  document.querySelectorAll("[data-doc]").forEach(b=>b.onclick=async()=>{const d=await api("/api/documents/"+b.dataset.doc);showDoc(d.html,`<p class="small muted">${esc(d.ref)} · as of ${esc(d.as_of)} · rules v${d.rule_version_id}${d.pdf_url?` · <a href="${d.pdf_url}" target="_blank">PDF</a>`:""}</p>`);});}
+function showDoc(html,head){const m=html.match(/<div class="sheet">([\s\S]*)<\/div>\s*<\/body>/);document.getElementById("fsOut").innerHTML=(head||"")+`<div class="sheet">${m?m[1]:html}</div>`;}
+document.getElementById("genDoc").onclick=async()=>{const id=document.getElementById("fsClient").value;const type=document.getElementById("docType").value;const out=document.getElementById("fsOut");if(!id)return;
+  const params={};if(!document.getElementById("docParams").hidden)params.consignee=document.getElementById("docConsignee").value;
+  out.innerHTML='<p class="muted">Generating…</p>';
+  try{const r=await api("/api/documents",{method:"POST",body:{clientId:+id,type,params}});showDoc(r.html,`<p class="small muted">${esc(r.ref)} · as of ${esc(r.asOf)} · rules v${r.ruleVersionId} · <a href="${r.pdfUrl}" target="_blank">PDF</a></p>`);await renderDocs();}
   catch(e){if(e.code==="FINDINGS_BLOCKED")out.innerHTML=`<div class="blocked"><strong>Blocked.</strong> ${esc(e.message)}<div class="small muted" style="margin-top:4px">Non-negotiable: no client-facing figure while any IEEPA entry is on an estimated liquidation date. Use "Internal draft" to see the working numbers.</div></div>`;else out.innerHTML=`<p class="muted">${esc(e.message)}</p>`;}};
 document.getElementById("draftFs").onclick=async()=>{const id=document.getElementById("fsClient").value;const out=document.getElementById("fsOut");if(!id)return;
   const r=await api("/api/findings/"+id+"/preview");out.innerHTML=(r.blocked?`<div class="blocked"><strong>Internal draft — not for release.</strong> ${r.estimated} IEEPA entries are on an estimated liquidation date; the client-facing sheet is blocked until ACE dates are confirmed.</div>`:`<p class="small muted">Internal draft.</p>`)+r.html;};
@@ -234,6 +245,6 @@ document.querySelectorAll(".pill").forEach(p=>p.onclick=()=>{document.querySelec
 const tabs=[...document.querySelectorAll("#nav button")];function go(b){tabs.forEach(x=>x.classList.remove("on"));b.classList.add("on");document.querySelectorAll("section").forEach(s=>s.hidden=s.id!==b.dataset.t);}
 tabs.forEach(b=>b.onclick=()=>go(b));
 document.addEventListener("keydown",e=>{if(["INPUT","TEXTAREA","SELECT"].includes(document.activeElement.tagName))return;if(e.key==="/"){e.preventDefault();go(tabs[2]);document.getElementById("cSearch").focus();}else if(e.key==="n"){go(tabs[2]);openClient(null);}else if(/^[1-7]$/.test(e.key)){go(tabs[+e.key-1]);}});
-load();
+load().then(loadDocTypes);
 </script>
 </body></html>
