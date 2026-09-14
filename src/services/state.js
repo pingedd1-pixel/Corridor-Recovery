@@ -12,12 +12,14 @@ export async function audit(db, action, table, rowId, before, after, userId = nu
 const CLIENT_SQL = `SELECT c.id, c.company, c.bucket, c.contact, c.phone, c.email, c.broker_name, c.stage, c.us_sales_window, c.share_non_cusma, c.rate_paid, c.ach_status,
   to_char(c.engagement_signed_at,'YYYY-MM-DD') AS signed, r.company AS ref, c.notes, c.referred_by_client_id FROM clients c LEFT JOIN clients r ON r.id = c.referred_by_client_id ORDER BY c.id`;
 const ENTRY_SQL = `SELECT e.id, e.client_id, c.company AS client, e.entry_no, to_char(e.entry_date,'YYYY-MM-DD') AS entry_date, e.port, e.hts, e.hts_base, e.entered_value, e.duty_rate, e.duty_amount,
-  to_char(e.liquidation_date,'YYYY-MM-DD') AS liquidation_date, e.liquidation_source, e.consignee_name, e.ior_name, e.status, e.filed_via, e.claimed_amount, e.refunded_amount FROM entries e JOIN clients c ON c.id = e.client_id ORDER BY e.id`;
+  to_char(e.liquidation_date,'YYYY-MM-DD') AS liquidation_date, e.liquidation_source, e.consignee_name, e.ior_name, e.status, e.filed_via, e.claimed_amount, e.refunded_amount,
+  e.reconciliation_flag, e.reconciliation_on_file, e.surety_paid, e.drawback_flag, e.adcvd_suspended FROM entries e JOIN clients c ON c.id = e.client_id ORDER BY e.id`;
 
 export const toClient = r => ({ id: r.id, company: r.company, bucket: r.bucket, contact: r.contact ?? "", phone: r.phone ?? "", email: r.email ?? "", broker: r.broker_name ?? "", stage: r.stage,
   sales: num(r.us_sales_window) ?? "", share: num(r.share_non_cusma) ?? "", rate: num(r.rate_paid) ?? "", ach: r.ach_status, signed: r.signed ?? "", ref: r.ref ?? "", notes: r.notes ?? "" });
 export const toEntry = r => ({ id: r.id, clientId: r.client_id, entry: r.entry_no, client: r.client, entryDate: r.entry_date ?? "", hts: r.hts ?? "", htsBase: r.hts_base ?? "", value: num(r.entered_value) ?? 0, rate: num(r.duty_rate) ?? "",
-  duty: num(r.duty_amount), liqDate: r.liquidation_source === "estimated" ? "" : (r.liquidation_date ?? ""), liqSource: r.liquidation_source, consignee: r.consignee_name ?? "", ior: r.ior_name ?? "", port: r.port ?? "", status: r.status, filedVia: r.filed_via ?? "" });
+  duty: num(r.duty_amount), liqDate: r.liquidation_source === "estimated" ? "" : (r.liquidation_date ?? ""), liqSource: r.liquidation_source, consignee: r.consignee_name ?? "", ior: r.ior_name ?? "", port: r.port ?? "", status: r.status, filedVia: r.filed_via ?? "",
+  reconciliation_flag: !!r.reconciliation_flag, reconciliation_on_file: !!r.reconciliation_on_file, surety_paid: !!r.surety_paid, drawback_flag: !!r.drawback_flag, adcvd_suspended: !!r.adcvd_suspended });
 
 export async function loadState(db, t = today()) {
   const { rules, texts, all, ruleVersionId, detail } = await loadRules(db, t);

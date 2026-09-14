@@ -14,7 +14,7 @@ Postgres · Node (Fastify) or Python (FastAPI) · React + Tailwind (or keep the 
 
 ## Data model
 clients(id, company, bucket, contact, phone, email, broker_name, stage, us_sales_window, share_non_cusma, rate_paid, ach_status, engagement_signed_at, referred_by_client_id, notes)
-entries(id, client_id, entry_no, entry_date, port, hts, hts_base, entered_value, duty_rate, duty_amount, liquidation_date, liquidation_source[ace|estimated|broker], consignee_name, ior_name, status[not_filed|cape_filed|protest_filed|accepted|rejected|refunded], filed_via, claimed_amount, refunded_amount, refunded_at, raw_row jsonb)
+entries(id, client_id, entry_no, entry_date, port, hts, hts_base, entered_value, duty_rate, duty_amount, liquidation_date, liquidation_source[ace|estimated|broker], consignee_name, ior_name, status[not_filed|cape_filed|protest_filed|accepted|rejected|refunded], filed_via, claimed_amount, refunded_amount, refunded_at, raw_row jsonb, reconciliation_flag, reconciliation_on_file, surety_paid, drawback_flag, adcvd_suspended — classification flags (PK 2026-09-14), routing per "Entry flags" below; prototype v0.2.2 + FOUNDER spec text pending)
 rules(id, key, value, effective_from, effective_to, source, approved_by, created_at)
 rule_versions(id, fingerprint, rule_ids int[], snapshot jsonb, created_at) — the immutable set of rule rows in force when a figure was computed; `computed.rule_version_id` and `documents.rule_version_id` point here
 broker_mappings(id, broker_name, headers_fingerprint, mapping jsonb, created_at) — saved column mapping per broker (see Ingestion)
@@ -67,3 +67,12 @@ Calibration for timelines (public filings, Q2 2026): clean Phase 1 claims paid i
 - Client-facing: a "contingent receivables" section on the findings sheet — duties paid under contested authorities, what would need to be true for a refund, and what we are doing to preserve the right. Never counted as recoverable.
 ### Origin module (Corridor Origin)
 - Product records: HS, BOM lines (input HS, origin, supplier, cost), rule of origin applied (tariff shift / RVC-TV / RVC-NC), computed result, determination document (signed by a named person), certification (9 data elements, blanket period), supplier-declaration tracker, 5-year record retention, annual re-cert task, "rules changed → re-run" trigger from the rule feed.
+
+## Entry flags and routing (PK 2026-09-14; interim until prototype v0.2.2 and FOUNDER's spec text)
+Precedence, top wins. Flags come from the broker / ACE report columns (aliases in `src/ingest/mapping.js`).
+- `adcvd_suspended` → **"Manual processing (19 USC 1520)"** — no CAPE, no deadline clock; task for the broker.
+- `reconciliation_on_file` → **"Future phase — reconciliation on file"** — tracked, no deadline.
+- `reconciliation_flag` (and not on file) → **"Phase 2 — reconciliation-flagged"** — same 80-day post-liquidation window as Phase 1 (`phase1_window_days`); counted as filable, not as Phase 1.
+- `surety_paid` or `drawback_flag` → **"Manual path — surety/drawback (confirm with broker)"** — excluded from Phase 1; the protest clock still runs (interpretation: rights are preserved by protest until the broker confirms the path); task "manual path — confirm with broker".
+- Otherwise the v0.2.1 routing by liquidation date (Phase 1 / Protest / Phase 3).
+Golden fixture: unchanged (the fixture CSV carries no flags). Flag behaviour is covered by synthetic-entry unit tests, not hand-written fixture rows; the golden is regenerated from v0.2.2 when FOUNDER ships it.

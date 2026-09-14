@@ -20,9 +20,17 @@ export const ALIASES = {
   consignee: ["consignee", "importer", "importer name", "ultimate consignee", "consignee name", "ior name"],
   ior: ["importer of record", "ior", "ior name"],
   port: ["port of entry", "port"],
+  // classification flags (PK 2026-09-14; prototype v0.2.2 pending). Truthy cell = Y/yes/true/1/X.
+  reconciliation_flag: ["reconciliation flag", "recon flag", "reconciliation indicator", "recon indicator", "reconciliation"],
+  reconciliation_on_file: ["reconciliation on file", "recon on file", "reconciliation entry", "recon entry filed", "reconciliation filed"],
+  surety_paid: ["surety paid", "paid by surety", "surety"],
+  drawback_flag: ["drawback flag", "drawback claimed", "drawback"],
+  adcvd_suspended: ["ad/cvd suspended", "adcvd suspended", "ad/cvd", "adcvd", "antidumping", "countervailing", "suspended liquidation"],
 };
+export const FLAG_KEYS = ["reconciliation_flag", "reconciliation_on_file", "surety_paid", "drawback_flag", "adcvd_suspended"];
+export const truthy = v => /^(y|yes|true|t|1|x|✓)$/i.test(String(v ?? "").trim());
 // Fields are resolved in this order so higher-value columns are claimed first.
-const ORDER = ["entry", "entryDate", "liqDate", "hts", "htsBase", "value", "rate", "duty", "consignee", "ior", "port"];
+const ORDER = ["entry", "entryDate", "liqDate", "hts", "htsBase", "value", "rate", "duty", "consignee", "ior", "port", "reconciliation_on_file", "reconciliation_flag", "surety_paid", "drawback_flag", "adcvd_suspended"];
 
 export function autoMap(headers) {
   const norm = headers.map(h => String(h ?? "").toLowerCase().trim());
@@ -45,7 +53,8 @@ export function ingestRows(rows, map, client) {
   rows.forEach(r => {
     const g = k => map[k] != null ? String(r[map[k]] ?? "").trim() : ""; const entry = g("entry"); if (!entry) { skipped++; return; } const num = s => +String(s).replace(/[^0-9.\-]/g, "") || 0;
     let rate = num(g("rate")); if (rate > 1) rate = rate / 100; const val = num(g("value")), duty = g("duty") ? num(g("duty")) : null; if (!rate && duty && val) rate = duty / val;
-    out.push({ entry, client, entryDate: fmt(D(g("entryDate"))) || g("entryDate"), hts: g("hts"), htsBase: g("htsBase"), value: val, rate: rate || "", duty, liqDate: fmt(D(g("liqDate"))), consignee: g("consignee"), ior: g("ior"), port: g("port"), raw: r });
+    const flags = Object.fromEntries(FLAG_KEYS.map(k => [k, map[k] != null && truthy(g(k))]));
+    out.push({ entry, client, entryDate: fmt(D(g("entryDate"))) || g("entryDate"), hts: g("hts"), htsBase: g("htsBase"), value: val, rate: rate || "", duty, liqDate: fmt(D(g("liqDate"))), consignee: g("consignee"), ior: g("ior"), port: g("port"), ...flags, raw: r });
   });
   return { entries: out, skipped };
 }
