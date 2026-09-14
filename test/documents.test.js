@@ -85,6 +85,18 @@ test("broker services agreement is a broker document: no client, broker name req
   assert.equal(row.client_id, null); assert.equal(row.counterparty, "Northline Customs Brokers Inc");
 });
 
+test("PK-approved terms (2026-09-14) render plain; still-pending terms stay bracketed", async () => {
+  const el = await app.inject({ method: "POST", url: "/api/documents?asOf=2026-09-14", payload: { clientId, type: "EL", params: {}, pdf: false } });
+  const t = stripTags(el.json().html);
+  assert.ok(t.includes("22.5% of the refund received") && !t.includes("[22.5]%"), "protest fee approved");
+  assert.ok(t.includes("25% of the amount recovered") && t.includes("for 12 months from signature") && t.includes("within 15 days") && t.includes("on [30] days' written notice"), "termination notice still pending counsel");
+  assert.ok(t.includes("[mediation, then arbitration in Vancouver]"), "dispute clause still pending counsel");
+  const nda = await app.inject({ method: "POST", url: "/api/documents?asOf=2026-09-14", payload: { clientId, type: "NDA", params: {}, pdf: false } });
+  assert.ok(stripTags(nda.json().html).includes("within 30 days after the last matter closes"));
+  const au = await app.inject({ method: "POST", url: "/api/documents?asOf=2026-09-14", payload: { clientId, type: "AU", params: {}, pdf: false } });
+  assert.ok(au.json().html.includes("valid for [12] months"), "authorization validity still pending counsel");
+});
+
 test("approving a placeholder rule (new row, effective date) removes the brackets without touching the template", async () => {
   await db.query("UPDATE rules SET effective_to='2026-10-01' WHERE key='authorization_validity_months' AND effective_to IS NULL");
   await db.query("INSERT INTO rules(key, value, effective_from, source, approved_by) VALUES ('authorization_validity_months', 18, '2026-10-01', 'counsel letter 2026-09-30', 'counsel: J. Doe 2026-09-30')");
@@ -112,12 +124,12 @@ test("once ACE dates land, FS and CN generate; every document carries mark, doc 
 });
 
 test("PDF: rendered on Letter with the footer, stored by reference, served by the API", async () => {
-  const r = await gen("AU"); assert.equal(r.status, 200); assert.equal(r.body.ref, "CM-AU-2026-005");
-  assert.ok(existsSync(r.body.pdfPath)); assert.ok(r.body.pdfPath.endsWith("CM-AU-2026-005.pdf"));
+  const r = await gen("AU"); assert.equal(r.status, 200); assert.equal(r.body.ref, "CM-AU-2026-006");
+  assert.ok(existsSync(r.body.pdfPath)); assert.ok(r.body.pdfPath.endsWith("CM-AU-2026-006.pdf"));
   const bytes = readFileSync(r.body.pdfPath); assert.equal(bytes.subarray(0, 4).toString(), "%PDF"); assert.ok(bytes.length > 5000);
-  const doc = (await db.query("SELECT pdf_url FROM documents WHERE ref='CM-AU-2026-005'")).rows[0]; assert.equal(doc.pdf_url, r.body.pdfUrl);
+  const doc = (await db.query("SELECT pdf_url FROM documents WHERE ref='CM-AU-2026-006'")).rows[0]; assert.equal(doc.pdf_url, r.body.pdfUrl);
   const get = await app.inject({ method: "GET", url: r.body.pdfUrl });
-  assert.equal(get.statusCode, 200); assert.equal(get.headers["content-type"], "application/pdf"); assert.ok(get.headers["content-disposition"].includes("CM-AU-2026-005.pdf"));
+  assert.equal(get.statusCode, 200); assert.equal(get.headers["content-type"], "application/pdf"); assert.ok(get.headers["content-disposition"].includes("CM-AU-2026-006.pdf"));
   assert.equal(get.rawPayload.subarray(0, 4).toString(), "%PDF");
   const bsa = await app.inject({ method: "POST", url: "/api/documents" + ASOF, payload: { type: "BSA", params: { brokerName: "Northline Customs Brokers Inc" } } });
   assert.equal(bsa.statusCode, 200); assert.ok(existsSync(bsa.json().pdfPath), "broker PDF written");

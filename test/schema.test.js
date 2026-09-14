@@ -13,7 +13,7 @@ after(async () => { await db.close(); });
 test("migrations apply once and are idempotent", async () => {
   assert.deepEqual(await migrate(db), []);
   const { rows } = await db.query("SELECT name FROM schema_migrations ORDER BY name");
-  assert.deepEqual(rows.map(r => r.name), ["001_init.sql", "002_documents.sql", "003_rules_2026_09_14.sql", "004_document_terms.sql"]);
+  assert.deepEqual(rows.map(r => r.name), ["001_init.sql", "002_documents.sql", "003_rules_2026_09_14.sql", "004_document_terms.sql", "005_legal_terms_approved.sql"]);
   const tables = (await db.query("SELECT table_name FROM information_schema.tables WHERE table_schema='public' ORDER BY 1")).rows.map(r => r.table_name);
   for (const t of ["clients", "entries", "rules", "rule_versions", "computed", "tasks", "documents", "bulletins", "prospects_b", "users", "audit_log", "broker_mappings"]) assert.ok(tables.includes(t), t);
 });
@@ -35,6 +35,13 @@ test("rules load as of a date with sources, and pin a rule_version", async () =>
   for (const k of ["form_4811_payee", "no_filing_until_complete", "phase1_exclusions", "phase2_reconciliation", "phase3_label", "step3_document"]) assert.ok(k in later.texts, k);
   assert.ok(later.texts.phase3_label.startsWith("Phase 3 — finally liquidated (contested on appeal)"));
   assert.ok(later.detail.find(d => d.key === "phase3_label").source.includes("GingerControl"));
+  // PK 2026-09-14: legal terms approved with defaults; placeholders closed the same day, band rows added
+  assert.equal(later.all.fee_protest.placeholder, false); assert.equal(later.rules.fee2, 0.225);
+  assert.equal(later.all.fee_protest_min.value, 0.20); assert.equal(later.all.fee_protest_max.value, 0.25);
+  for (const k of ["fee_canadian_recovery", "engagement_exclusivity_months", "invoice_due_days", "data_deletion_days"]) assert.equal(later.all[k].placeholder, false, k);
+  assert.deepEqual([later.all.fee_canadian_recovery.value, later.all.engagement_exclusivity_months.value, later.all.invoice_due_days.value, later.all.data_deletion_days.value], [0.25, 12, 15, 30]);
+  assert.equal(later.all.authorization_validity_months.placeholder, true, "still pending counsel");
+  assert.equal(again.all.fee_protest.placeholder, true, "before 2026-09-14 the placeholder row is in force");
   await assert.rejects(() => db.query("INSERT INTO rules(key, value, value_text, effective_from, source) VALUES ('x', 1, 'y', '2026-01-01', 's')"), /check|constraint/i);
 });
 
