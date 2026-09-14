@@ -44,4 +44,7 @@ data/
 
 # Radar scanner outputs and dropped directory CSVs (may contain contacts) — never committed
 radar/out/
-radar/inputs/
+radar/inputs/*
+!radar/inputs/TEMPLATE.csv
+# Radar SEC submissions cache (public data, but large and regenerable)
+radar/cache/
