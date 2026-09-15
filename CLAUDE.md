@@ -3,6 +3,7 @@
 You are building the Corridor Recovery desk: software that finds, phases, and manages tariff-recovery claims for Canadian and US companies. Four parties work in this repo — PK (principal, decides), FOUNDER (the desk agent, owns product and docs), a second partner, and their agent — plus you, Claude Code. This file is the contract between all of us.
 
 ## Source of truth, in order
+0. This file is the only agent contract in the repo. Other agents' instruction files live under `partner/` and defer to it — see `docs/FILE_OWNERSHIP.md` for who owns which `.md`.
 1. `docs/BUILD_SPEC.md` — what to build. If code and spec disagree, the spec wins; if the spec is wrong, change the spec in the same PR and say why.
 2. `prototype/desk-v0.2.html` — the functional reference. The engine (`classify`, `phase`, `clientStats`, `tasks`, `findings`) must behave identically in the real app. Port it; don't reinterpret it.
 3. `brand/brand-guide.html` — every screen and document follows it. IBM Plex Sans; ink/paper/aluminium/copper; status tags verified/rough/unverified; the two-rule mark.
